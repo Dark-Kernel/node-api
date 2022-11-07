@@ -23,7 +23,7 @@ async function amazon(product) {
 		"Connection": "keep-alive",
 	}
 	let url0 = `https://www.amazon.in/s?k=${product}&ref=nb_sb_noss_1`
-	const resp = await axios.get(url0, { headers })
+	const resp =  axios.get(url0, { headers })
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
@@ -67,7 +67,7 @@ async function flipkart(product){
 
 	var art1=[];
 	let url = `https://www.flipkart.com/search?q=${product}` // scraping url
-	const resp = await axios(url)
+	const resp =  axios(url)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
@@ -129,7 +129,7 @@ async function reliance(product){
 
 	var art2=[]
 	let url = `https://www.reliancedigital.in/search?q=${product}` // scraping url
-	const resp = await axios(url)
+	const resp =  axios(url)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
@@ -200,7 +200,7 @@ async function shopclues(product){
 
 	var art3=[]
 	let url3 = `https://bazaar.shopclues.com/search?q=${product}&sc_z=&z=0&count=15&user_id=&user_segment=default` // scraping url
-	const resp = await axios(url3)
+	const resp =  axios(url3)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
