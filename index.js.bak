@@ -6,24 +6,13 @@ const express = require('express') // target url, to follow root
 const app = express()
 const cors = require('cors') // headers
 app.use(cors())
-var art0=[]
-var art1=[]
-var art2=[]
-var art3=[]
-var len = 15;
+var len = 20;
 function SortByName(x,y) {
 	return ((x.titles == y.titles) ? 0 : ((x.titles > y.titles) ? 1 : -1 ));
 }
 
-
-
-app.get('/', function (req, res) {
-	res.json('This is my webscraper')
-})
-
-app.get('/results', function (req, res) {
-	const product = req.query.product.replace('_',' ');
-	let result = []
+async function amazon(product) {
+	var art0=[];
 	let headers = {
 
 		"Host": "www.amazon.in",
@@ -33,50 +22,31 @@ app.get('/results', function (req, res) {
 		"Accept-Encoding": "gzip, deflate, br",
 		"Connection": "keep-alive",
 	}
-
 	let url0 = `https://www.amazon.in/s?k=${product}&ref=nb_sb_noss_1`
-	axios.get(url0, { headers })
+	const resp =  axios.get(url0, { headers })
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
-
-			/*	// Fixed Bug: Unproper values.
-		fs.writeFile("amazon.html", html, (err) => {
-				if (err)
-					console.log(err);
-				else { console.log("done" )} 
-		}); 
-		*/
 			let site = "amazon"
 			let titles = []
 			let prices = []
 			let imgs = []
 			let urls = []
 			let mrps = []
-
 			$('span.a-offscreen', html).each(function () { mrps.push($(this).text().replace('₹',''));  })
 			$('span.a-text-normal', html).each(function () { titles.push($(this).text().replace(/^(MORE\ RESULTS)/g,'').replace(/^(RESULTS)/g,''));  })
 			$('span.a-price-whole', html).each(function () { prices.push($(this).text().replace('₹',''));  })
 			$('img.s-image', html).each(function () { imgs.push($(this).attr('src')); })
 			$('a.s-no-outline', html).each(function () { urls.push($(this).attr('href').replace(/^(\/)/,'https://www.amazon.in/')) })
-
-
 			titles = titles.filter(function(e){return e});	
-			prices.slice(5)
-			titles.slice(5)
-			imgs.slice(5)
-			urls.slice(5)
-			mrps.slice(5)
-
+			prices.slice(5);titles.slice(5);imgs.slice(5);urls.slice(5);mrps.slice(5)
 			for (var i = 0; i < len; i++) {
-
 				imgs.filter(item => !"https://m.media-amazon.com/images/I/11hfR5Cq9GL._SS200_.png".includes(item))
 				let title = titles[i]
 				let url = urls[i]
 				let img = imgs[i]
 				let price = prices[i]
 				let mrp = mrps[i]
-
 				art0.push({
 					site,
 					title,
@@ -84,30 +54,32 @@ app.get('/results', function (req, res) {
 					mrp,
 					url,
 					img,
-
 				})
 			}
-			console.log(art0)
+			return art0;
 		}).catch(err => console.log(err))
+	return resp;
+}
 
 
+async function flipkart(product){
 
-	// flipkart
 
-	let url1 = `https://www.flipkart.com/search?q=${product}` // scraping url
-	axios(url1)
+	var art1=[];
+	let url = `https://www.flipkart.com/search?q=${product}` // scraping url
+	const resp =  axios(url)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
 
-			/*
-				// debugged- fixed url and title not found error.
+	
+/*				// debugged- fixed url and title not found error.
 	    fs.writeFile("flipkart.html", html, (err) => {
 		      if (err)
 				console.log(err);
 		      else { console.log("done" )} 
-		}); 
-		*/
+		}); */
+		
 			let site = "flipkart"	
 			let titles = []
 			let prices = []
@@ -123,8 +95,11 @@ app.get('/results', function (req, res) {
 			if(!urls.length){
 				$('a._2rpwqI', html).each(function () { urls.push($(this).attr('href').replace(/^(\/)/,'https://www.flipkart.com/').replace(/\?.*/,'')); })
 			}
+			if(!mrps.length){
+				$('div._3I9_wc', html).each(function () { mrps.push($(this).text().replace('₹','')); })
+			}
 
-			for (let i = 1; i < 20; i++) {
+			for (let i = 1; i < len; i++) {
 
 				let title = titles[i]
 				let url = urls[i]
@@ -141,14 +116,20 @@ app.get('/results', function (req, res) {
 					img,
 
 				})
-			} 
+			}
+			return art1;
 		}).catch(err => console.log(err))
+	return resp;
+}
 
 
-	// Reliance
 
-	let url2 = `https://www.reliancedigital.in/search?q=${product}` // scraping url
-	axios(url2)
+async function reliance(product){
+
+
+	var art2=[]
+	let url = `https://www.reliancedigital.in/search?q=${product}` // scraping url
+	const resp =  axios(url)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
@@ -171,6 +152,7 @@ app.get('/results', function (req, res) {
 
 			$('div.cxlrZS', html).each(function (){ chk=$(this).text() })
 			if(chk == "No Result Found, Please try other search."){
+				return art2;
 				//   console.log("\n\n-----------NOT FOUND IN RELIANCE---------\n\n")
 			}else{
 				$('span.StyledPriceBoxM__MRPText-sc-1l9ms6f-0', html).each(function () { mrps.push($(this).text().replace('₹',''));  })
@@ -183,7 +165,7 @@ app.get('/results', function (req, res) {
 					$('span.llZwTv', html).each(function () { prices.push($(this).text());  })
 				}
 
-				for (let i = 0; i < 15; i++) {
+				for (let i = 0; i < len; i++) {
 
 					let title = titles[i]
 					let url = urls[i]
@@ -191,6 +173,7 @@ app.get('/results', function (req, res) {
 					let price = prices[i]
 					let mrp = mrps[i]
 
+					if(!title==""){
 					art2.push({
 						site,
 						title,
@@ -200,16 +183,24 @@ app.get('/results', function (req, res) {
 						img,
 
 					})
+					}
 				} 
 
 			}
+			return art2;
 		}).catch(err => console.log(err))
 
+	return resp;
+}
 
-	// Shopclues
 
+
+async function shopclues(product){
+
+
+	var art3=[]
 	let url3 = `https://bazaar.shopclues.com/search?q=${product}&sc_z=&z=0&count=15&user_id=&user_segment=default` // scraping url
-	axios(url3)
+	const resp =  axios(url3)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
@@ -233,9 +224,9 @@ app.get('/results', function (req, res) {
 			
 			$('span.no_fnd', html).each(function () { chk=$(this).text();  })
 			if(chk == "NO RESULT FOUND !"){
-				var result = art0.concat(art1, art2)
-				res.json(result.sort(SortByName))
-				console.log("\n\n-----------NOT FOUND IN SHOPCLUES---------\n\n")
+				//res.json(result.sort(SortByName))
+				return art3;
+				//console.log("\n\n-----------NOT FOUND IN SHOPCLUES---------\n\n")
 			}else{
 				$('span.old_prices', html).each(function () { mrps.push($(this).text().replace('₹','').trim());  })
 				$('div.img_section', html).each(function () { titles.push($(this).find('img').attr('alt'));  })
@@ -246,7 +237,7 @@ app.get('/results', function (req, res) {
 				titles = titles.filter(function(e){return e});	
 				urls = urls.filter(function(e){return e});	
 
-				for (let i = 0; i < 10; i++) {
+				for (let i = 0; i < len; i++) {
 
 					imgs.filter(item => !"//cdn.shopclues.com//images/ui/plistlogo.png".includes(item))
 					let title = titles[i]
@@ -254,7 +245,8 @@ app.get('/results', function (req, res) {
 					let img = imgs[i]
 					let price = prices[i]
 					let mrp = mrps[i]
-
+					//console.log("\n\n",title," \n\n")
+					if(!title==""){
 					art3.push({
 						site,
 						title,
@@ -264,23 +256,48 @@ app.get('/results', function (req, res) {
 						img,
 
 					})
+					}
+					
 				} 
-				
+
 			}
-			console.log(`\n\n ${product} \n\n`)
-				result = [...art0, art1, art2, art3]
-				console.log(typeof(result))
+			//result = [...art0, art1, art2, art3]
 			//	res.json(result.sort(SortByName))
-				res.json(result)
-				//console.log(result)	
-				result = [];
-				art0=[]
-				art1=[]
-				art2=[]
-				art3=[]
+			//res.json(result)
+			//console.log(result)	
+			return art3;
 
 
 		}).catch(err => console.log(err))
+	return resp;
+}
+
+
+app.get('/', function (req, res) {
+	res.json('This is my node webscraper 😄')
+})
+
+
+app.get('/results', async function (req, res) {
+
+	const product = req.query.product.replace('_',' ');
+	let result = []
+//	var r1;
+	//amazon
+	const r1 = await amazon(product);
+//	console.log(r1);
+	// flipkart
+	const r2 = await flipkart(product);
+
+	// Reliance
+	const r3 = await reliance(product);
+
+	// Shopclues
+	const r4 = await shopclues(product);
+
+	result = [r1, r2, r3, r4];
+	res.json(result);
+	console.log(result);
 
 })
 
