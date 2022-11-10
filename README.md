@@ -8,7 +8,7 @@
 
 
 ### Routes: 
-    - `/results?product=`
-    - `/specs?link=`
+    - /results?product=
+    - /specs?link=
  
 
