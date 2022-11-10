@@ -1,8 +1,8 @@
 const PORT = process.env.PORT || 8080
-const axios = require('axios') // https url access (like curl)
+const axios = require('axios') // https link access (like clink)
 const cheerio = require('cheerio') // we scraper access classes
 const fs = require('fs')
-const express = require('express') // target url, to follow root
+const express = require('express') // target link, to follow root
 const app = express()
 const cors = require('cors') // headers
 app.use(cors())
@@ -24,12 +24,12 @@ async function amazon(product) {
 		"Accept-Encoding": "gzip, deflate, br",
 		"Connection": "keep-alive",
 	}
-	let url0 = `https://www.amazon.in/s?k=${product}&ref=nb_sb_noss_1`
-	const resp =  axios.get(url0, { headers })
+	let link0 = `https://www.amazon.in/s?k=${product}&ref=nb_sb_noss_1`
+	const resp =  axios.get(link0, { headers })
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
-			let site = "amazon"
+			let site = "Amazon"
 			let titles = []
 			let prices = []
 			let hrefs = []
@@ -42,7 +42,7 @@ async function amazon(product) {
 			$('a.s-no-outline', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.amazon.in/')) })
 			titles = titles.filter(function(e){return e});	
 			prices.slice(5);titles.slice(5);hrefs.slice(5);links.slice(5);mrps.slice(5)
-			for (var i = 0; i < len; i++) {
+			for (var i = 0; i < 18; i++) {
 				hrefs.filter(item => !"https://m.media-amazon.com/images/I/11hfR5Cq9GL._SS200_.png".includes(item))
 				let title = titles[i]
 				let link = links[i]
@@ -51,11 +51,12 @@ async function amazon(product) {
 				let mrp = mrps[i]
 				art0.push({
 					site,
-					title,
 					price,
+					title,
 					mrp,
 					link,
 					href,
+
 				})
 			}
 			return art0;
@@ -68,7 +69,6 @@ async function flip_spec(link){
 
 	var specs = {};
 	let url = `${link}`
-	var result =[];
 	const resp =  axios(url)
 		.then(response => {
 			const html = response.data
@@ -96,20 +96,22 @@ async function flip_spec(link){
 async function flipkart(product){
 
 	var art1=[];
-	let url = `https://www.flipkart.com/search?q=${product}` // scraping url
-	const resp =  axios(url)
+	let link = `https://www.flipkart.com/search?q=${product}` // scraping link
+	const resp =  axios(link)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
 
+
 /*				// debugged- fixed url and title not found error.
 	    fs.writeFile("flipkart.html", html, (err) => {
+
 		      if (err)
 				console.log(err);
 		      else { console.log("done" )} 
 		}); */
 		    
-			let site = "flipkart"	
+			let site = "Flipkart"	
 			let titles = []
 			let prices = []
 			let hrefs = []
@@ -140,8 +142,8 @@ async function flipkart(product){
 
 				art1.push({
 					site,
-					title,
 					price,
+					title,
 					mrp,
 					link,
 					href,
@@ -159,21 +161,21 @@ async function reliance(product){
 
 
 	var art2=[]
-	let url = `https://www.reliancedigital.in/search?q=${product}` // scraping url
-	const resp =  axios(url)
+	let link = `https://www.reliancedigital.in/search?q=${product}` // scraping link
+	const resp =  axios(link)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
 
 			
 				// debugged: fixed the price not found && Product not found.
-	    fs.writeFile("reliance.html", html, (err) => {
+	   /* fs.writeFile("reliance.html", html, (err) => {
 		      if (err)
 				console.log(err);
 		      else { console.log("done" )} 
-		}); 
+		}); */
 		
-			let site = "reliance"
+			let site = "Reliance"
 			let titles = []
 			let prices = []
 			let hrefs = []
@@ -210,8 +212,8 @@ async function reliance(product){
 					if(!title==""){
 					art2.push({
 						site,
-						title,
 						price,
+						title,
 						mrp,
 						link,
 						href,
@@ -233,8 +235,8 @@ async function shopclues(product){
 
 
 	var art3=[]
-	let url3 = `https://bazaar.shopclues.com/search?q=${product}&sc_z=&z=0&count=15&user_id=&user_segment=default` // scraping url
-	const resp =  axios(url3)
+	let link3 = `https://bazaar.shopclues.com/search?q=${product}&sc_z=&z=0&count=15&user_id=&user_segment=default` // scraping link
+	const resp =  axios(link3)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
@@ -248,7 +250,7 @@ async function shopclues(product){
 		}); 
 		*/
 
-			let site = "shopclues"	
+			let site = "ShopClues"	
 			let titles = []
 			let prices = []
 			let hrefs = []
@@ -283,8 +285,8 @@ async function shopclues(product){
 					if(!title==""){
 					art3.push({
 						site,
-						title,
 						price,
+						title,
 						mrp,
 						link,
 						href,
