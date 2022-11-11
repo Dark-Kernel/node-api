@@ -35,9 +35,9 @@ async function amazon(product) {
 			let hrefs = []
 			let links = []
 			let mrps = []
-			$('span.a-offscreen', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  })
+			$('span.a-offscreen', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 			$('span.a-text-normal', html).each(function () { titles.push($(this).text().replace(/^(MORE\ RESULTS)/g,'').replace(/^(RESULTS)/g,''));  })
-			$('span.a-price-whole', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  })
+			$('span.a-price-whole', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 			$('img.s-image', html).each(function () { hrefs.push($(this).attr('src')); })
 			$('a.s-no-outline', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.amazon.in/')) })
 			titles = titles.filter(function(e){return e});	
@@ -159,10 +159,10 @@ async function flipkart(product){
 			let links = []
 			let mrps = []
 
-			$('div._27UcVY', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  })
+			$('div._27UcVY', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 			$('img._396cs4', html).each(function () { titles.push($(this).attr('alt'));  })
 			// $('ul._1xgFaf', html).each(function () { specs.push($(this).text());  })
-			$('div._30jeq3', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  })
+			$('div._30jeq3', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 			$('img._396cs4', html).each(function () { hrefs.push($(this).attr('src')); })
 			$('a._1fQZEK', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.flipkart.com/').replace(/\?.*/,'')); })
 			if(!links.length){
@@ -170,7 +170,7 @@ async function flipkart(product){
 			}
 			
 			if(!mrps.length){
-				$('div._3I9_wc', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,'')); })
+				$('div._3I9_wc', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,'')); })
 			}
 		
 			for (let i = 1; i < len; i++) {
@@ -229,17 +229,17 @@ async function reliance(product){
 				return art2;
 				//   console.log("\n\n-----------NOT FOUND IN RELIANCE---------\n\n")
 			}else{
-				$('span.StyledPriceBoxM__MRPText-sc-1l9ms6f-0', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  })
+				$('span.StyledPriceBoxM__MRPText-sc-1l9ms6f-0', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 				$('p.sp__name', html).each(function () { titles.push($(this).text());  })
-				$('span.kCentr', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  }); //.replace(/\,.*/,'').replace(/\..*/,'')
+				$('span.kCentr', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  }); //.replace(/\,.*/,'').replace(/\..*/,'')
 				$('img.imgCenter', html).each(function () { hrefs.push($(this).attr('data-srcset').replace(/^(\/)/,'https://www.reliancedigital.in/')); })
 				$('div.sp', html).each(function () { links.push($(this).find('a').attr('href').replace(/^(\/)/,'https://www.reliancedigital.in/')); })
 
 				if(!prices.length){
-					$('span.llZwTv', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  })
+					$('span.llZwTv', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 				}
 				if(!prices.length){
-					$('span.gimCrs',html).each(function () { prices.push($(this).text().replace('₹','').replace(/\,/,'').replace(/\..*/,''));  })
+					$('span.gimCrs',html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 				}
 
 				for (let i = 0; i < len; i++) {
@@ -305,9 +305,9 @@ async function shopclues(product){
 				return art3;
 				//console.log("\n\n-----------NOT FOUND IN SHOPCLUES---------\n\n")
 			}else{
-				$('span.old_prices', html).each(function () { mrps.push($(this).text().replace('₹','').trim().replace(/\,/,'').replace(/\..*/,''));  })
+				$('span.old_prices', html).each(function () { mrps.push($(this).text().replace('₹','').trim().replace(/\..*/,''));  })
 				$('div.img_section', html).each(function () { titles.push($(this).find('img').attr('alt'));  })
-				$('span.p_price', html).each(function () { prices.push($(this).text().replace('₹','').trim().replace(/\,/,'').replace(/\..*/,''));  })
+				$('span.p_price', html).each(function () { prices.push($(this).text().replace('₹','').trim().replace(/\..*/,''));  })
 				$('div.img_section', html).each(function () { hrefs.push($(this).find('img').attr('data-img')); })
 				$('div.search_blocks', html).each(function () { links.push($(this).find('a').attr('href').replace(/^(\/)/,'https:/')); })
 
