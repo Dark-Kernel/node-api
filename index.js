@@ -65,6 +65,7 @@ async function amazon(product) {
 }
 
 
+
 async function flip_spec(link){
 
 	var specs = {};
@@ -75,16 +76,56 @@ async function flip_spec(link){
 			const $ = cheerio.load(html)
 			let spectab =[];
 			let tabledata= [];
+		
 
+			//console.log(url.includes("amazon"));
+			if(url.includes("flipkart")){
+			// flipkart--
 					$('td._1hKmbr', html).each(function(){ spectab.push(`${$(this).text().replace(/^Flipkart.*/,'').replace('undefined','')}`);})
         			$('td.URwL2w', html).each(function(){ tabledata.push(`${$(this).text().replace(/^Flipkart.*/,'')} `); })
-					spectab	 =  spectab.filter(function(e){return e});	
-					tabledata = tabledata.filter(function(e){return e});	
+				}else if (url.includes("amazon")){
+					// Amazon		
+        			$('table.a-spacing-micro', html).each(function(){ 
+						tabledata = ($(this).find('td.a-span9').text().replace(/\ /,'').trim().split('       '))
+						spectab = ($(this).find('span.a-text-bold').text().split(/(?=[A-Z])/).join('\ ').replace(/\  /g,'').split(' '))
+					})
+				}else if(url.includes("shopclues")){
+					// ShopClues
+					$('tbody', html).each(function(){  // .split('   ')      .replace(/:/g,'').trim().replace(/\,/g,'').replace(/([\ ])/g,'')
+						tabledata.push($(this).find('td[width="70%"]').text().replace(/:/g,'').trim().replace(/\ /g,'')); // .replace(/\  /g,'').split(' ') .replace(/\ .*/g,'') .split(/[\ ..]/)
+						spectab.push($(this).find('td[width="30%"]').text().split(/(?=[A-Z])/).join('\ ').replace(/^Maximum.*/,'').replace(/\  /g,'')); //.replace(/₹.*/,'').replace(/\ .*/g,'')
+						
+					});
+					
+					spectab = spectab.filter(function(e){return e});	
+					tabledata = tabledata.filter(function(e){return e}).slice(0, -1);
+				
+					var ts = spectab.toString();
+					var ts2 = ts.split(/\s+/)
+					spectab = ts2
+					ts = tabledata.toString();
+					ts2 = ts.split(/\s+/)
+					tabledata = ts2
 
-					for (var i=0; i<=spectab.length;i++){
-							specs[spectab[i]] = tabledata[i];
+				}else if(url.includes("reliancedigital")){
+					// Reliance Digital 
+					$('div.pdp__specification-row', html).each(function(){ 
+						spectab.push($(this).find('div.pdp__tab-info__list__name').text()); // .replace(/\  /g,'').split(' ')
+						tabledata.push($(this).find('div.pdp__tab-info__list__value').text()); // .replace(/\  /g,'').split(' ')
+				});
+				console.log(spectab);
+				console.log(tabledata)
+				}
+
+					//spectab = spectab.filter(function(e){return e});	
+					//tabledata = tabledata.filter(function(e){return e});	
+					
+					for (var i=0; i<=10;i++){
+							
+						specs[spectab[i]] = tabledata[i];
+							//specs[b[i]] = a[i];
 					}
-					console.log(specs)
+					//console.log(specs)
 					return specs;				
 			
 		}).catch(err => console.log(err))
