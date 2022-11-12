@@ -4,8 +4,10 @@ const cheerio = require('cheerio') // we scraper access classes
 const fs = require('fs')
 const express = require('express') // target link, to follow root
 const app = express()
+var path = require('path');
 const cors = require('cors') // headers
 app.use(cors())
+var cache;
 var len = 20;
 
 function SortByName(x, y) {
@@ -65,7 +67,6 @@ async function amazon(product) {
 }
 
 
-
 async function flip_spec(link){
 
 	var specs = {};
@@ -78,7 +79,6 @@ async function flip_spec(link){
 			let tabledata= [];
 		
 
-			//console.log(url.includes("amazon"));
 			if(url.includes("flipkart")){
 			// flipkart--
 					$('td._1hKmbr', html).each(function(){ spectab.push(`${$(this).text().replace(/^Flipkart.*/,'').replace('undefined','')}`);})
@@ -91,7 +91,7 @@ async function flip_spec(link){
 					})
 				}else if(url.includes("shopclues")){
 					// ShopClues
-					$('tbody', html).each(function(){  // .split('   ')      .replace(/:/g,'').trim().replace(/\,/g,'').replace(/([\ ])/g,'')
+					$('tbody', html).each(function(){  
 						tabledata.push($(this).find('td[width="70%"]').text().replace(/:/g,'').trim().replace(/\ /g,'')); // .replace(/\  /g,'').split(' ') .replace(/\ .*/g,'') .split(/[\ ..]/)
 						spectab.push($(this).find('td[width="30%"]').text().split(/(?=[A-Z])/).join('\ ').replace(/^Maximum.*/,'').replace(/\  /g,'')); //.replace(/₹.*/,'').replace(/\ .*/g,'')
 						
@@ -104,7 +104,7 @@ async function flip_spec(link){
 					console.log(ts)
 					var ts3 = ts.replace(/([A-Z])([\ ])/g, '$1').trim().replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
 					// 1. var ts4 = ts3.replace(/([\ ])([\(])([\ ])/g,'$2').trim()
-					//var ts4 = ts3.replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+					// 2. var ts4 = ts3.replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
 					console.log(ts3)
 					var ts2 = ts3.split(/\s+/)
 					spectab = ts2
@@ -119,17 +119,13 @@ async function flip_spec(link){
 						spectab.push($(this).find('div.pdp__tab-info__list__name').text()); // .replace(/\  /g,'').split(' ')
 						tabledata.push($(this).find('div.pdp__tab-info__list__value').text()); // .replace(/\  /g,'').split(' ')
 				});
-				//console.log(spectab);
-				//console.log(tabledata)
 				}
 
-					//spectab = spectab.filter(function(e){return e});	
-					//tabledata = tabledata.filter(function(e){return e});	
+					spectab = spectab.filter(function(e){return e});	
+					tabledata = tabledata.filter(function(e){return e});	
 					
 					for (var i=0; i<10;i++){
-							
 						specs[spectab[i]] = tabledata[i];
-							//specs[b[i]] = a[i];
 					}
 					console.log(specs)
 					return specs;				
@@ -169,7 +165,7 @@ async function flipkart(product){
 			$('img._396cs4', html).each(function () { titles.push($(this).attr('alt'));  })
 			// $('ul._1xgFaf', html).each(function () { specs.push($(this).text());  })
 			$('div._30jeq3', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
-			$('img._396cs4', html).each(function () { hrefs.push($(this).attr('src')); })
+			$('img._396cs4', html).each(function () { hrefs.push($(this).attr('src').replace(/\*.svg$/,'')); })
 			$('a._1fQZEK', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.flipkart.com/').replace(/\?.*/,'')); })
 			if(!links.length){
 				$('a._2rpwqI', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.flipkart.com/').replace(/\?.*/,'')); })
@@ -179,7 +175,7 @@ async function flipkart(product){
 				$('div._3I9_wc', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,'')); })
 			}
 		
-			for (let i = 1; i < len; i++) {
+			for (let i = 1; i < 24; i++) {
 
 				let title = titles[i]
 				let link = links[i]
@@ -248,7 +244,7 @@ async function reliance(product){
 					$('span.gimCrs',html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 				}
 
-				for (let i = 0; i < len; i++) {
+				for (let i = 0; i < 24; i++) {
 
 					let title = titles[i]
 					let link = links[i]
@@ -344,10 +340,8 @@ async function shopclues(product){
 				} 
 
 			}
-			//result = [...art0, art1, art2, art3]
 			//	res.json(result.sort(SortByName))
-			//res.json(result)
-			//console.log(result)	
+
 			return art3;
 
 		}).catch(err => console.log(err))
@@ -365,6 +359,26 @@ app.get('/specs', async function(req, res){
 	res.json(spec);
 
 })
+
+app.get('/cache', async function(req, res){
+
+	// fs.readFile('data.json', function(err, data){
+	// 	if (err) throw err;
+	// 	res.json(data);
+	// });
+	var options = {
+        root: path.join(__dirname)
+    };
+	res.sendFile('data.json', options, function (err) {
+        if (err) {
+            next(err);
+        } else {
+            console.log('Sent');
+        }
+	});
+})
+	
+
 
 app.get('/results', async function (req, res) {
 
@@ -384,8 +398,15 @@ app.get('/results', async function (req, res) {
 	const r4 = await shopclues(product);
 
 	result = [r1, r2, r3, r4];
-	
+	cache = JSON.stringify(result.sort(SortByName));
+
 	res.json(result.sort(SortByName));
+
+	fs.writeFile('data.json', cache, function(err){
+		if (err) throw err;
+		console.log('saved!');
+	})
+
 	console.log(result);
 
 })
