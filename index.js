@@ -101,11 +101,17 @@ async function flip_spec(link){
 					tabledata = tabledata.filter(function(e){return e}).slice(0, -1);
 				
 					var ts = spectab.toString();
-					var ts2 = ts.split(/\s+/)
+					console.log(ts)
+					var ts3 = ts.replace(/([A-Z])([\ ])/g, '$1').trim().replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+					// 1. var ts4 = ts3.replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+					//var ts4 = ts3.replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+					console.log(ts3)
+					var ts2 = ts3.split(/\s+/)
 					spectab = ts2
 					ts = tabledata.toString();
 					ts2 = ts.split(/\s+/)
 					tabledata = ts2
+					
 
 				}else if(url.includes("reliancedigital")){
 					// Reliance Digital 
@@ -113,19 +119,19 @@ async function flip_spec(link){
 						spectab.push($(this).find('div.pdp__tab-info__list__name').text()); // .replace(/\  /g,'').split(' ')
 						tabledata.push($(this).find('div.pdp__tab-info__list__value').text()); // .replace(/\  /g,'').split(' ')
 				});
-				console.log(spectab);
-				console.log(tabledata)
+				//console.log(spectab);
+				//console.log(tabledata)
 				}
 
 					//spectab = spectab.filter(function(e){return e});	
 					//tabledata = tabledata.filter(function(e){return e});	
 					
-					for (var i=0; i<=10;i++){
+					for (var i=0; i<10;i++){
 							
 						specs[spectab[i]] = tabledata[i];
 							//specs[b[i]] = a[i];
 					}
-					//console.log(specs)
+					console.log(specs)
 					return specs;				
 			
 		}).catch(err => console.log(err))
