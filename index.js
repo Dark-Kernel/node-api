@@ -15,7 +15,7 @@ var cache;
 var len = 20;
 
 function SortByName(x, y) {
-    return ((x.titles == y.titles) ? 0 : ((x.titles > y.titles) ? 1 : -1));
+	return ((x.titles == y.titles) ? 0 : ((x.titles > y.titles) ? 1 : -1));
 }
 
 
@@ -30,17 +30,19 @@ async function amazon(product) {
 		"Accept-Encoding": "gzip, deflate, br",
 		"Connection": "keep-alive",
 	}
-	let link0 = `https://www.amazon.in/s?k=${product}&ref=nb_sb_noss_1`
+  	
+  	let site = "Amazon"
+	let titles = []
+	let prices = []
+  	let hrefs = []
+  	let links = []
+  	let mrps = []
+  	for(let j=1;j<=2;j++){
+	let link0 = `https://www.amazon.in/s?k=${product}&page=${j}&ref=nb_sb_noss_1`
 	const resp =  axios.get(link0, { headers })
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
-			let site = "Amazon"
-			let titles = []
-			let prices = []
-			let hrefs = []
-			let links = []
-			let mrps = []
 			$('span.a-offscreen', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 			$('span.a-text-normal', html).each(function () { titles.push($(this).text().replace(/^(MORE\ RESULTS)/g,'').replace(/^(RESULTS)/g,''));  })
 			$('span.a-price-whole', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
@@ -67,7 +69,9 @@ async function amazon(product) {
 			}
 			return art0;
 		}).catch(err => console.log(err))
-	return resp;
+		if(j==2)
+		  	return resp;
+	}
 }
 
 
@@ -81,32 +85,32 @@ async function flip_spec(link){
 			const $ = cheerio.load(html)
 			let spectab =[];
 			let tabledata= [];
-		
+
 
 			if(url.includes("flipkart")){
-			// flipkart--
-					$('td._1hKmbr', html).each(function(){ spectab.push(`${$(this).text().replace(/^Flipkart.*/,'').replace('undefined','')}`);})
-        			$('td.URwL2w', html).each(function(){ tabledata.push(`${$(this).text().replace(/^Flipkart.*/,'')} `); })
-				}else if (url.includes("amazon")){
-					// Amazon		
-        			$('table.a-spacing-micro', html).each(function(){ 
-						tabledata = ($(this).find('td.a-span9').text().replace(/\ /,'').trim().split('       '))
-						spectab = ($(this).find('span.a-text-bold').text().split(/(?=[A-Z])/).join('\ ').replace(/\  /g,'').split(' '))
-					})
-				}else if(url.includes("shopclues")){
-					// ShopClues
-					$('tbody', html).each(function(){  
-						tabledata.push($(this).find('td[width="70%"]').text().replace(/:/g,'').trim().replace(/\ /g,'')); // .replace(/\  /g,'').split(' ') .replace(/\ .*/g,'') .split(/[\ ..]/)
-						spectab.push($(this).find('td[width="30%"]').text().split(/(?=[A-Z])/).join('\ ').replace(/^Maximum.*/,'').replace(/\  /g,'')); //.replace(/₹.*/,'').replace(/\ .*/g,'')
-						
-					});
-					
-					spectab = spectab.filter(function(e){return e});	
-					tabledata = tabledata.filter(function(e){return e}).slice(0, -1);
-				
-					var ts = spectab.toString();
-					console.log(ts)
-					var ts3 = ts.replace(/([A-Z])([\ ])/g, '$1').trim().replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+				// flipkart--
+				$('td._1hKmbr', html).each(function(){ spectab.push(`${$(this).text().replace(/^Flipkart.*/,'').replace('undefined','')}`);})
+				$('td.URwL2w', html).each(function(){ tabledata.push(`${$(this).text().replace(/^Flipkart.*/,'')} `); })
+			}else if (url.includes("amazon")){
+				// Amazon		
+				$('table.a-spacing-micro', html).each(function(){ 
+					tabledata = ($(this).find('td.a-span9').text().replace(/\ /,'').trim().split('       '))
+					spectab = ($(this).find('span.a-text-bold').text().split(/(?=[A-Z])/).join('\ ').replace(/\  /g,'').split(' '))
+				})
+			}else if(url.includes("shopclues")){
+				// ShopClues
+				$('tbody', html).each(function(){  
+					tabledata.push($(this).find('td[width="70%"]').text().replace(/:/g,'').trim().replace(/\ /g,'')); // .replace(/\  /g,'').split(' ') .replace(/\ .*/g,'') .split(/[\ ..]/)
+					spectab.push($(this).find('td[width="30%"]').text().split(/(?=[A-Z])/).join('\ ').replace(/^Maximum.*/,'').replace(/\  /g,'')); //.replace(/₹.*/,'').replace(/\ .*/g,'')
+
+				});
+
+				spectab = spectab.filter(function(e){return e});	
+				tabledata = tabledata.filter(function(e){return e}).slice(0, -1);
+
+				var ts = spectab.toString();
+				console.log(ts)
+				var ts3 = ts.replace(/([A-Z])([\ ])/g, '$1').trim().replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
 					// 1. var ts4 = ts3.replace(/([\ ])([\(])([\ ])/g,'$2').trim()
 					// 2. var ts4 = ts3.replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
 					console.log(ts3)
@@ -115,28 +119,28 @@ async function flip_spec(link){
 					ts = tabledata.toString();
 					ts2 = ts.split(/\s+/)
 					tabledata = ts2
-					
+
 
 				}else if(url.includes("reliancedigital")){
 					// Reliance Digital 
 					$('div.pdp__specification-row', html).each(function(){ 
 						spectab.push($(this).find('div.pdp__tab-info__list__name').text()); // .replace(/\  /g,'').split(' ')
 						tabledata.push($(this).find('div.pdp__tab-info__list__value').text()); // .replace(/\  /g,'').split(' ')
-				});
+					});
 				}
 
-					spectab = spectab.filter(function(e){return e});	
-					tabledata = tabledata.filter(function(e){return e});	
-					
-					for (var i=0; i<10;i++){
-						specs[spectab[i]] = tabledata[i];
-					}
-					console.log(specs)
-					return specs;				
-			
+			spectab = spectab.filter(function(e){return e});	
+			tabledata = tabledata.filter(function(e){return e});	
+
+			for (var i=0; i<10;i++){
+				specs[spectab[i]] = tabledata[i];
+			}
+			console.log(specs)
+			return specs;				
+
 		}).catch(err => console.log(err))
-	return resp;
-}
+					return resp;
+				}
 
 
 
@@ -152,28 +156,30 @@ async function flipkart(product){
 		"Accept-Encoding": "gzip, deflate, br",
 		"Connection": "keep-alive",
 	}
-	let link = `https://www.flipkart.com/search?q=${product}` // scraping link
+
+	let site = "Flipkart"	
+	let titles = []
+	let prices = []
+	let hrefs = []
+	let links = []
+	let mrps = []
+	for(let j=1;j<=2;j++){
+//	let link = `https://www.flipkart.com/search?q=${product}` // scraping link
+	let link = `https://www.flipkart.com/search?q=${product}&page=${j}` // scraping link
 	//let link = `https://www.flipkart.com/search?q=${product}&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off`
-	const resp =  axios(link, {headers})
+	let resp = axios(link, {headers})
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
 
 
-				// debugged- fixed url and title not found error.
-	    /* fs.writeFile("flipkart.html", html, (err) => {
+			// debugged- fixed url and title not found error.
+			/* fs.writeFile("flipkart.html", html, (err) => {
 
 		      if (err)
 				console.log(err);
 		      else { console.log("done" )} 
 		}); */
-		    
-			let site = "Flipkart"	
-			let titles = []
-			let prices = []
-			let hrefs = []
-			let links = []
-			let mrps = []
 
 			$('div._27UcVY', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
 			$('img._396cs4', html).each(function () { titles.push($(this).attr('alt'));  })
@@ -219,7 +225,10 @@ async function flipkart(product){
 			}
 			return art1;
 		}).catch(err => console.log(err))
-	return resp;
+		if(j==2)
+			return resp;
+	}
+	
 }
 
 
@@ -228,26 +237,27 @@ async function reliance(product){
 
 
 	var art2=[]
-	let link = `https://www.reliancedigital.in/search?q=${product}` // scraping link
+
+  	let site = "Reliance"
+  	let titles = []
+  	let prices = []
+  	let hrefs = []
+  	let links = []
+  	let mrps = []
+  	for(let j=1;j<=2;j++){
+	let link = `https://www.reliancedigital.in/search?q=${product}&page=${j}` // scraping link
 	const resp =  axios(link)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
 
-			
-				// debugged: fixed the price not found && Product not found.
-	   /* fs.writeFile("reliance.html", html, (err) => {
+
+			// debugged: fixed the price not found && Product not found.
+			/* fs.writeFile("reliance.html", html, (err) => {
 		      if (err)
 				console.log(err);
 		      else { console.log("done" )} 
 		}); */
-		
-			let site = "Reliance"
-			let titles = []
-			let prices = []
-			let hrefs = []
-			let links = []
-			let mrps = []
 			let chk = ""
 
 			$('div.cxlrZS', html).each(function (){ chk=$(this).text() })
@@ -277,25 +287,25 @@ async function reliance(product){
 					let mrp = mrps[i]
 
 					if(!title==""){
-					art2.push({
-						site,
-						price,
-						title,
-						mrp,
-						link,
-						href,
+						art2.push({
+							site,
+							price,
+							title,
+							mrp,
+							link,
+							href,
 
-					})
+						})
 					}
 				} 
 
 			}
 			return art2;
 		}).catch(err => console.log(err))
-
-	return resp;
+		if(j==2)
+			return resp;
+	}
 }
-
 
 
 async function shopclues(product){
@@ -324,7 +334,7 @@ async function shopclues(product){
 			let links = []
 			let mrps = []
 			let chk = ""
-			
+
 			$('span.no_fnd', html).each(function () { chk=$(this).text();  })
 			if(chk == "NO RESULT FOUND !"){
 				//res.json(result.sort(SortByName))
@@ -350,17 +360,17 @@ async function shopclues(product){
 					let mrp = mrps[i]
 					//console.log("\n\n",title," \n\n")
 					if(!title==""){
-					art3.push({
-						site,
-						price,
-						title,
-						mrp,
-						link,
-						href,
+						art3.push({
+							site,
+							price,
+							title,
+							mrp,
+							link,
+							href,
 
-					})
+						})
 					}
-					
+
 				} 
 
 			}
@@ -387,26 +397,27 @@ app.get('/specs', async function(req, res){
 app.get('/cache', async function(req, res){
 
 	var options = {
-        root: path.join(__dirname)
-    };
+		root: path.join(__dirname)
+	};
 	res.sendFile('data.json', options, function (err) {
-        if (err) {
-            next(err);
-        } else {
-            console.log('Sent');
-        }
+		if (err) {
+			next(err);
+		} else {
+			console.log('Sent');
+		}
 	});
 })
-	
+
 
 app.get('/email', async function(req, res){
 
 	const id = req.query.id
+	const track_link= req.query.link
 	const mailjet = Mailjet.apiConnect(
 		process.env.MJ_APIKEY_PUBLIC,
 		process.env.MJ_APIKEY_PRIVATE,
 	);
-	
+
 	fs.readFile(path.join(__dirname, "thrifty-mail.html"),'utf8', function (err, data) {
 		if (err) {
 			console.log(err);
@@ -414,37 +425,37 @@ app.get('/email', async function(req, res){
 		}
 		//var content = util.format(data);
 
-	const request = mailjet
+		const request = mailjet
 			.post('send', { version: 'v3.1' })
 			.request({
-			  Messages: [
-				{
-				  From: {
-					Email: "thrifty.noreply@gmail.com",
-					Name: "Thrifty"
-				  },
-				  To: [
+				Messages: [
 					{
-					  Email: id,
-					  Name: "Dear User."
+						From: {
+							Email: "thrifty.noreply@gmail.com",
+							Name: "Thrifty"
+						},
+						To: [
+							{
+								Email: id,
+								Name: "Dear User."
+							}
+						],
+						Subject: "Price changed! ",
+						TextPart: "Your seleted product got drop in price.!",
+						HTMLPart: data			  
 					}
-				  ],
-				  Subject: "Price changed! ",
-				  TextPart: "Your seleted product got drop in price.!",
-				  HTMLPart: data			  
-				}
-			  ]
+				]
 			})
-	
-	request
-		.then((result) => {
-			console.log(result.body)
-			res.send("Sent!")
-		})
-		.catch((err) => {
-			console.log(err.statusCode)
-		})
-	  });
+
+		request
+			.then((result) => {
+				console.log(result.body)
+				res.send("Sent!")
+			})
+			.catch((err) => {
+				console.log(err.statusCode)
+			})
+	});
 
 })
 
