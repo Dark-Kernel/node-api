@@ -10,5 +10,7 @@
 ### Routes: 
     - /results?product=
     - /specs?link=
- 
+	- /email?id=<_emailid_>&link=<_track_link>
+	- /cache
+
 
