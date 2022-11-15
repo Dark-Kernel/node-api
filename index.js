@@ -1,13 +1,15 @@
 const PORT = process.env.PORT || 8080
-process.env.MJ_APIKEY_PRIVATE='6b5861a1f5c5fcf74a3ab11b4a92c4e8';
-process.env.MJ_APIKEY_PUBLIC='b7aff59a27bac9c40b1307d1bfc51002';
+//process.env.MJ_APIKEY_PRIVATE='6b5861a1f5c5fcf74a3ab11b4a92c4e8';
+//process.env.MJ_APIKEY_PUBLIC='b7aff59a27bac9c40b1307d1bfc51002';
+const sgMail = require('@sendgrid/mail');
+process.env.SENDGRID_API_KEY='SG.yAmfaKEqQXKaKaQERDtsgA.pPIdOURwedB5QkghH30OVK_p9mPvRsrknXCZd_iPmUQ'
 const axios = require('axios') // https link access (like clink)
 const cheerio = require('cheerio') // we scraper access classes
 const fs = require('fs')
 const express = require('express') // target link, to follow root
 const app = express()
 var util = require("util");
-const Mailjet = require('node-mailjet');
+//const Mailjet = require('node-mailjet');
 var path = require('path');
 const cors = require('cors') // headers
 app.use(cors())
@@ -413,10 +415,11 @@ app.get('/email', async function(req, res){
 
 	const id = req.query.id
 	const track_link= req.query.link
-	const mailjet = Mailjet.apiConnect(
-		process.env.MJ_APIKEY_PUBLIC,
-		process.env.MJ_APIKEY_PRIVATE,
-	);
+  	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+	//const mailjet = Mailjet.apiConnect(
+	//	process.env.MJ_APIKEY_PUBLIC,
+	//	process.env.MJ_APIKEY_PRIVATE,
+	//);
 
 	fs.readFile(path.join(__dirname, "thrifty-mail.html"),'utf8', function (err, data) {
 		if (err) {
@@ -425,27 +428,17 @@ app.get('/email', async function(req, res){
 		}
 		//var content = util.format(data);
 
-		const request = mailjet
-			.post('send', { version: 'v3.1' })
-			.request({
-				Messages: [
-					{
-						From: {
-							Email: "thrifty.noreply@gmail.com",
-							Name: "Thrifty"
-						},
-						To: [
-							{
-								Email: id,
-								Name: "Dear User."
-							}
-						],
-						Subject: "Price changed! ",
-						TextPart: "Your seleted product got drop in price.!",
-						HTMLPart: data			  
-					}
-				]
-			})
+	  const msg = {
+
+		    to: id,
+		    from: 'thrifty.noreply@gmail.com',
+		    subject: 'Sending with Twilio SendGrid is Fun',
+		    text: 'and easy to do anywhere, even with Node.js',
+		    html: data,
+
+	  };
+
+	const request = sgMail.send(msg);
 
 		request
 			.then((result) => {
@@ -459,10 +452,19 @@ app.get('/email', async function(req, res){
 
 })
 
+/*
+app.get('/email2', async function(req, res){
+	
+  const mail = req.query.id
+  const _link = req.query.link
+  
+
+})
+*/
 
 app.get('/results', async function (req, res) {
 
-	const product = req.query.product.replace('_',' ');
+	const product = req.query.product.replace('_','+');
 	let result = []
 
 	//amazon
