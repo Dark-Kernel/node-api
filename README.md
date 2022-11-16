@@ -14,10 +14,12 @@
 	- /cache
 	- /suggestion?product=<name>
 	- /wishlist?act=<i/d/r>&title=<>&link=<>&id=<email>
-		* i :
-				- All
-		* r :
-				- id
-		* d : 	
-				- link, id , title
+		
+
+### DB Operations of act=<>: 
+| option | Parameters |
+| ------ | ---------- |
+| i | All |
+| r | id |
+| d | link, id , title |
 
