@@ -13,4 +13,11 @@
 	- /email?id=<_emailid_>&link=<_track_link>
 	- /cache
 	- /suggestion?product=<name>
+	- /wishlist?act=<i/d/r>&title=<>&link=<>&id=<email>
+		* i :
+				- All
+		* r :
+				- id
+		* d : 	
+				- link, id , title
 

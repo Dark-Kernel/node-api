@@ -2,6 +2,7 @@ const PORT = process.env.PORT || 8080
 //process.env.MJ_APIKEY_PRIVATE='6b5861a1f5c5fcf74a3ab11b4a92c4e8';
 //process.env.MJ_APIKEY_PUBLIC='b7aff59a27bac9c40b1307d1bfc51002';
 const sgMail = require('@sendgrid/mail');
+var MongoClient = require('mongodb').MongoClient;
 process.env.SENDGRID_API_KEY='SG.yAmfaKEqQXKaKaQERDtsgA.pPIdOURwedB5QkghH30OVK_p9mPvRsrknXCZd_iPmUQ'
 const axios = require('axios') // https link access (like clink)
 const cheerio = require('cheerio') // we scraper access classes
@@ -412,10 +413,78 @@ app.get('/cache', async function(req, res){
 })
 
 
+
+app.get('/wishlist', async function(req, res){
+
+	const track_link= req.query.link
+  	const mail_id = req.query.id
+  	const title = req.query.title	
+
+   	const act = req.query.act
+ 	const uri ="mongodb://127.0.0.1:27017/";
+  
+    MongoClient.connect(uri, function(err, db){
+	  	var dbo = db.db("test");
+	    	
+	    if (err) throw err;
+	  	console.log("Connected successfully to server");
+		if(act=="i"){
+	   		var cquery = { email: mail_id };
+	   		dbo.collection("customers").find(cquery).toArray(function(err, result1) {
+		        if (err) throw err;
+				console.log(result1.length)	
+			  if(result1.length!==0){
+				console.log("exist")
+				var query = { email: mail_id }
+				var push = { $push: { link: track_link , title: title }}
+				dbo.collection("customers").updateMany(query, push, function(err, result) {
+				  if (err) throw err;
+				  console.log("Inserted")
+				  res.json("Done");
+				  db.close();
+				});
+			  }else{
+				var query = { email: mail_id , link: [track_link] , title: [title] };
+				dbo.collection("customers").insertOne(query, function(err, result) {
+				  if (err) throw err;
+				  console.log("Inserted")
+				  res.json("Done");
+				  db.close();
+				});
+			  }	
+			  
+			});
+		}
+	  	else if(act=="r"){
+	
+	   	  	var query = { email: mail_id };
+	   		dbo.collection("customers").find(query).toArray(function(err, result) {
+		         	if (err) throw err;
+					console.log("Readed: ", result)
+			  		res.json(result);
+		  			db.close();
+		       });
+		}
+	  	else if(act=="d"){
+
+			var query = { email: mail_id };
+		  	var unset = { $pull: { link: track_link , title: title }}
+			dbo.collection("customers").updateMany(query, unset, function(err, result) {
+		        	if (err) throw err;
+					console.log("Deleted: ", result)
+			  		res.json("Deleted");
+		  			db.close();
+		       });
+
+		}
+	});
+
+})
+
+
 app.get('/email', async function(req, res){
 
 	const id = req.query.id
-	const track_link= req.query.link
   	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 	//const mailjet = Mailjet.apiConnect(
 	//	process.env.MJ_APIKEY_PUBLIC,
