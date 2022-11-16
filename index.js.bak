@@ -16,6 +16,7 @@ app.use(cors())
 var cache;
 var len = 20;
 
+
 function SortByName(x, y) {
 	return ((x.titles == y.titles) ? 0 : ((x.titles > y.titles) ? 1 : -1));
 }
@@ -452,15 +453,66 @@ app.get('/email', async function(req, res){
 
 })
 
-/*
-app.get('/email2', async function(req, res){
-	
-  const mail = req.query.id
-  const _link = req.query.link
-  
+
+app.get('/suggestion', async function(req, res){
+
+  //	const for = req.query.for;
+ 	var sug=[];
+	const product = req.query.product.replace('_','+');
+	let headers = {
+
+		"Host": "www.amazon.in",
+		"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+		"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+		"Accept-Language": "en-US,en;q=0.5",
+		"Accept-Encoding": "gzip, deflate, br",
+		"Connection": "keep-alive",
+	}
+  	
+  	let site = "Amazon"
+	let titles = []
+	let prices = []
+  	let hrefs = []
+  	let links = []
+  	let mrps = []
+	let link0 = `https://www.amazon.in/s?k=${product}&ref=nb_sb_noss_1`
+	const resp = await axios.get(link0, { headers })
+		.then(response => {
+			const html = response.data
+			const $ = cheerio.load(html)
+			$('span.a-offscreen', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
+			$('span.a-text-normal', html).each(function () { titles.push($(this).text().replace(/^(MORE\ RESULTS)/g,'').replace(/^(RESULTS)/g,''));  })
+			$('span.a-price-whole', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
+			$('img.s-image', html).each(function () { hrefs.push($(this).attr('src')); })
+			$('a.s-no-outline', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.amazon.in/')) })
+			titles = titles.filter(function(e){return e});	
+			prices.slice(5);titles.slice(5);hrefs.slice(5);links.slice(5);mrps.slice(5)
+			for (var i = 0; i < 1; i++) {
+				hrefs.filter(item => !"https://m.media-amazon.com/images/I/11hfR5Cq9GL._SS200_.png".includes(item))
+				let title = titles[i]
+				let link = links[i]
+				let href = hrefs[i]
+				let price = prices[i]
+				let mrp = mrps[i]
+				sug.push({
+					site,
+					price,
+					title,
+					mrp,
+					link,
+					href,
+
+				})
+			}
+			return sug;//res.json(sug)
+		  //console.log(sug)
+		}).catch(err => console.log(err))
+		
+	res.json(resp);
+	console.log(resp);
 
 })
-*/
+
 
 app.get('/results', async function (req, res) {
 
