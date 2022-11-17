@@ -418,7 +418,8 @@ app.get('/wishlist', async function(req, res){
 
 	const track_link= req.query.link
   	const mail_id = req.query.id
-  	const title = req.query.title	
+  	const title = req.query.title
+  	const price = req.query.price
 
    	const act = req.query.act
  	const uri ="mongodb://127.0.0.1:27017/";
@@ -436,7 +437,7 @@ app.get('/wishlist', async function(req, res){
 			  if(result1.length!==0){
 				console.log("exist")
 				var query = { email: mail_id }
-				var push = { $push: { link: track_link , title: title }}
+				var push = { $push: { link: track_link , title: title , price: price }}
 				dbo.collection("customers").updateMany(query, push, function(err, result) {
 				  if (err) throw err;
 				  console.log("Inserted")
@@ -444,7 +445,7 @@ app.get('/wishlist', async function(req, res){
 				  db.close();
 				});
 			  }else{
-				var query = { email: mail_id , link: [track_link] , title: [title] };
+				var query = { email: mail_id , link: [track_link] , title: [title] , price: [price] };
 				dbo.collection("customers").insertOne(query, function(err, result) {
 				  if (err) throw err;
 				  console.log("Inserted")
@@ -468,7 +469,7 @@ app.get('/wishlist', async function(req, res){
 	  	else if(act=="d"){
 
 			var query = { email: mail_id };
-		  	var unset = { $pull: { link: track_link , title: title }}
+		  	var unset = { $pull: { link: track_link , title: title , price: price }}
 			dbo.collection("customers").updateMany(query, unset, function(err, result) {
 		        	if (err) throw err;
 					console.log("Deleted: ", result)
@@ -482,53 +483,199 @@ app.get('/wishlist', async function(req, res){
 })
 
 
-app.get('/email', async function(req, res){
+async function price_check(url, price){
+	
+	const resp = await axios(url)
+		.then(response => {
+			const html = response.data
+			const $ = cheerio.load(html)
+		  	let amz_price;
+		  	let flp_price;
+		  	let shp_price;
+		  	let rlc_price;
+	
+		  	let mrp;
+		  	let title;
+		  	let href;
+		  	let link;
 
-	const id = req.query.id
-  	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+			if(url.includes("flipkart")){
+				// flipkart--
+				$('div._30jeq3', html).each(function () { flp_price=$(this).text().replace('₹','').replace(/\..*/,'');  })
+			  	if(flp_price<price){
+					
+				  	$('div._27UcVY', html).each(function () { mrp=$(this).text().replace('₹','').replace(/\..*/,'');  })
+					$('img._396cs4', html).each(function () { title=$(this).attr('alt');  })
+					$('img._396cs4', html).each(function () { href=$(this).attr('src').replace(/(.*.svg)$/,''); })
+					$('a._1fQZEK', html).each(function () { link=$(this).attr('href').replace(/^(\/)/,'https://www.flipkart.com/').replace(/\?.*/,''); })
+					if(!link.length){
+						$('a._2rpwqI', html).each(function () { link=$(this).attr('href').replace(/^(\/)/,'https://www.flipkart.com/').replace(/\?.*/,''); })
+					}
+					if(!link.length){
+						$('a.IRpwTa', html).each(function () { link=$(this).attr('href').replace(/^(\/)/,'https://www.flipkart.com/').replace(/\?.*/,''); })
+					}
+					if(!mrp.length){
+						$('div._3I9_wc', html).each(function () { mrp=$(this).text().replace('₹','').replace(/\..*/,''); })
+					}
+					if(!title.length){
+						$('a.IRpwTa', html).each(function () { title=$(this).attr('title');  })
+					}
+					if(!href.length){
+						$('img._2r_T1I', html).each(function () { href=$(this).attr('src').replace(/(.*.svg)$/,''); })
+					}
+		
+				  return 1;	
+				}else{
+					return 0;
+				}	
+			}else if (url.includes("amazon")){
+				// Amazon		
+			  	$('span.a-price-whole', html).each(function () { amz_price=$(this).text().replace('₹','').replace(/\..*/,'');  })
+			  	if(amz_price<price){
+				
+				  	$('span.a-offscreen', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
+					$('span.a-text-normal', html).each(function () { titles.push($(this).text().replace(/^(MORE\ RESULTS)/g,'').replace(/^(RESULTS)/g,''));  })
+					$('span.a-price-whole', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
+					$('img.s-image', html).each(function () { hrefs.push($(this).attr('src')); })
+					$('a.s-no-outline', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.amazon.in/')) })
+
+				  return 1;	
+				}else{
+					return 0;
+				}
+			}else if(url.includes("shopclues")){
+				// ShopClues
+			  	$('span.p_price', html).each(function () { shp_price=$(this).text().replace('₹','').trim().replace(/\..*/,'');  })
+			  	if(shp_price<price){
+					
+					$('span.old_prices', html).each(function () { mrps.push($(this).text().replace('₹','').trim().replace(/\..*/,''));  })
+					$('div.img_section', html).each(function () { titles.push($(this).find('img').attr('alt'));  })
+					$('span.p_price', html).each(function () { prices.push($(this).text().replace('₹','').trim().replace(/\..*/,''));  })
+					$('div.img_section', html).each(function () { hrefs.push($(this).find('img').attr('data-img')); })
+					$('div.search_blocks', html).each(function () { links.push($(this).find('a').attr('href').replace(/^(\/)/,'https:/')); })
+
+				  return 1;	
+				}else{
+					return 0;
+				}
+			}else if(url.includes("reliancedigital")){
+				// Reliance Digital 
+				$('span.kCentr', html).each(function () { rlc_price=$(this).text().replace('₹','').replace(/\..*/,'');  }); //.replace(/\,.*/,'').replace(/\..*/,'')
+			  	if(rlc_price<price){
+				
+					$('span.StyledPriceBoxM__MRPText-sc-1l9ms6f-0', html).each(function () { mrps.push($(this).text().replace('₹','').replace(/\..*/,''));  })
+					$('p.sp__name', html).each(function () { titles.push($(this).text());  })
+					$('span.kCentr', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  }); //.replace(/\,.*/,'').replace(/\..*/,'')
+					$('img.imgCenter', html).each(function () { hrefs.push($(this).attr('data-srcset').replace(/^(\/)/,'https://www.reliancedigital.in/')); })
+					$('div.sp', html).each(function () { links.push($(this).find('a').attr('href').replace(/^(\/)/,'https://www.reliancedigital.in/')); })
+
+					if(!prices.length){
+						$('span.llZwTv', html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
+					}
+					if(!prices.length){
+						$('span.gimCrs',html).each(function () { prices.push($(this).text().replace('₹','').replace(/\..*/,''));  })
+					}
+
+				  return 1;	
+				}else{
+					return 0;
+				}
+			}
+
+
+		}).catch(err => console.log(err))
+	return resp;
+
+}
+
+
+app.get('/price', async function(req, res){
+
+  	var users={};
+  	var links={};
+  	var p_stat;
+	const uri ="mongodb://127.0.0.1:27017/";
+    MongoClient.connect(uri, function(err, db){
+	  	var dbo = db.db("test");
+
+  	   		dbo.collection("customers").findOne({}, function(err, result) {
+			  		         	if (err) throw err;
+			  			  		users = result;
+			  					console.log(users.link)
+			  					links = users.link
+			  					price = users.price
+			  					console.log(links[1])
+			  					links.forEach(function(item){
+									
+								 p_stat = price_check(item, price)
+								 res.send(p_stat)
+
+								})
+			  		  			db.close();
+			  		       });
+
+	});
+
+});
+
+
+//app.get('/email', async function(req, res){
+async function email(id, p_img, p_price, p_title, p_link, price, mrp)
+	//const id = req.query.id
+  	//const p_img = req.query.img
+  	//const p_price = req.query.price
+  	//const p_title = req.query.title
+  	//const p_link = req.query.link
+  	
+//  	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 	//const mailjet = Mailjet.apiConnect(
 	//	process.env.MJ_APIKEY_PUBLIC,
 	//	process.env.MJ_APIKEY_PRIVATE,
 	//);
 
-	fs.readFile(path.join(__dirname, "thrifty-mail.html"),'utf8', function (err, data) {
+	fs.readFile(path.join(__dirname, "email-template.html"),'utf8', function (err, data) {
 		if (err) {
 			console.log(err);
 			process.exit(1);
 		}
+	  	
 		//var content = util.format(data);
+		var d1 = data.replace("product.title","${p_title}")	
+		var d2 = d1.replace("product.mrp", "${price}")
+		console.log(d2);	
 
-	  const msg = {
-
-		    to: id,
-		    from: 'thrifty.noreply@gmail.com',
-		    subject: 'Sending with Twilio SendGrid is Fun',
-		    text: 'and easy to do anywhere, even with Node.js',
-		    html: data,
-
-	  };
-
-	const request = sgMail.send(msg);
-
-		request
-			.then((result) => {
-				console.log(result.body)
-				res.send("Sent!")
-			})
-			.catch((err) => {
-				console.log(err.statusCode)
-			})
+//	  const msg = {
+//
+//		    to: id,
+//		    from: 'thrifty.noreply@gmail.com',
+//		    subject: 'Sending with Twilio SendGrid is Fun',
+//		    text: 'and easy to do anywhere, even with Node.js',
+//		    html: data,
+//
+//	  };
+//
+//	const request = sgMail.send(msg);
+//
+//		request
+//			.then((result) => {
+//				console.log(result.body)
+//				res.send("Sent!")
+//			})
+//			.catch((err) => {
+//				console.log(err.statusCode)
+//			})
 	});
-
-})
+}
+//})
 
 
 app.get('/suggestion', async function(req, res){
 
-  //	const for = req.query.for;
- 	var sug=[];
+ 	var sug={};
 	const product = req.query.product.replace('_','+');
-	let headers = {
+
+  	let headers = {
 
 		"Host": "www.amazon.in",
 		"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
@@ -555,7 +702,7 @@ app.get('/suggestion', async function(req, res){
 			$('img.s-image', html).each(function () { hrefs.push($(this).attr('src')); })
 			$('a.s-no-outline', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/,'https://www.amazon.in/')) })
 			titles = titles.filter(function(e){return e});	
-			prices.slice(5);titles.slice(5);hrefs.slice(5);links.slice(5);mrps.slice(5)
+		  	prices.slice(5);titles.slice(5);hrefs.slice(5);links.slice(5);mrps.slice(5)
 			for (var i = 0; i < 1; i++) {
 				hrefs.filter(item => !"https://m.media-amazon.com/images/I/11hfR5Cq9GL._SS200_.png".includes(item))
 				let title = titles[i]
@@ -563,18 +710,16 @@ app.get('/suggestion', async function(req, res){
 				let href = hrefs[i]
 				let price = prices[i]
 				let mrp = mrps[i]
-				sug.push({
+				sug = {
 					site,
 					price,
 					title,
 					mrp,
 					link,
 					href,
-
-				})
+				}
 			}
-			return sug;//res.json(sug)
-		  //console.log(sug)
+			return sug;
 		}).catch(err => console.log(err))
 		
 	res.json(resp);

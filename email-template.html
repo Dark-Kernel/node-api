@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Email</title>
+	<!-- <link rel="stylesheet" href="styles.css" /> -->
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+	  tailwind.config = {
+		theme: {},
+	  };
+	</script>
+  </head>
+  <body
+	  class="h-screen bg-gradient-to-br from-[#95d1c8] to-[#58aca0] text-[#157064]"
+	  >
+	  <div class="text-center my-10">
+		<h1 class="font-bold text-3xl">
+		  Hey, seems like your favourite product changed it's price.
+		</h1>
+	<p class="text-lg my-2">
+	This email was sent to user.email since they had subscribed to our
+	price alert notifications service.
+	</p>
+	  </div>
+	  <div
+		  class="rounded-lg bg-[rgba(219,243,235,0.5)] w-5/6 md:w-4/6 mx-auto p-8 text-center"
+		  >
+		  <h3 class="font-semibold text-2xl">product.title</h3>
+		  <img
+			  width="auto"
+			  height="auto"
+			  max-height="300px"
+			  max-width="400px"
+			  src="product.href"
+			  alt="product.title"
+			  />
+		  <p class="text-lg">Current Price: product.price</p>
+		  <p class="text-lg">Old MRP: product.mrp</p>
+		  <p class="text-lg">Product available on product.site</p>
+	  </div>
+	  <div class="text-center my-10">
+		<p class="text-lg my-2">
+		You can unsubscribe anytime from our price notifications from
+		<a
+			class="font-semibold hover:text-green-700 hover:underline"
+			href="https://thrifty-shopping-assistant/price-alerts"
+			>Here.</a
+		  >
+		</p>
+	  </div>
+  </body>
+</html>
