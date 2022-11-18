@@ -83,55 +83,32 @@ async function flip_spec(link){
 
 	var specs = {};
 	let url = `${link}`
-	const resp =  axios(url)
-		.then(response => {
-			const html = response.data
-			const $ = cheerio.load(html)
-			let spectab =[];
-			let tabledata= [];
 
 
-			if(url.includes("flipkart")){
-				// flipkart--
-				$('td._1hKmbr', html).each(function(){ spectab.push(`${$(this).text().replace(/^Flipkart.*/,'').replace('undefined','')}`);})
-				$('td.URwL2w', html).each(function(){ tabledata.push(`${$(this).text().replace(/^Flipkart.*/,'')} `); })
-			}else if (url.includes("amazon")){
-				// Amazon		
-				$('table.a-spacing-micro', html).each(function(){ 
-					tabledata = ($(this).find('td.a-span9').text().replace(/\ /,'').trim().split('       '))
-					spectab = ($(this).find('span.a-text-bold').text().split(/(?=[A-Z])/).join('\ ').replace(/\  /g,'').split(' '))
-				})
-			}else if(url.includes("shopclues")){
-				// ShopClues
-				$('tbody', html).each(function(){  
-					tabledata.push($(this).find('td[width="70%"]').text().replace(/:/g,'').trim().replace(/\ /g,'')); // .replace(/\  /g,'').split(' ') .replace(/\ .*/g,'') .split(/[\ ..]/)
-					spectab.push($(this).find('td[width="30%"]').text().split(/(?=[A-Z])/).join('\ ').replace(/^Maximum.*/,'').replace(/\  /g,'')); //.replace(/₹.*/,'').replace(/\ .*/g,'')
-
-				});
-
-				spectab = spectab.filter(function(e){return e});	
-				tabledata = tabledata.filter(function(e){return e}).slice(0, -1);
-
-				var ts = spectab.toString();
-				console.log(ts)
-				var ts3 = ts.replace(/([A-Z])([\ ])/g, '$1').trim().replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
-					// 1. var ts4 = ts3.replace(/([\ ])([\(])([\ ])/g,'$2').trim()
-					// 2. var ts4 = ts3.replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
-					console.log(ts3)
-					var ts2 = ts3.split(/\s+/)
-					spectab = ts2
-					ts = tabledata.toString();
-					ts2 = ts.split(/\s+/)
-					tabledata = ts2
+		  if (url.includes("amazon")){
+			// Amazon	
+			let headers = {
+	
+			"Host": "www.amazon.in",
+			"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+			"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+			"Accept-Language": "en-US,en;q=0.5",
+			"Accept-Encoding": "gzip, deflate, br",
+			"Connection": "keep-alive",
+			}
+  	
+			const resp = axios.get(url, {headers} )
+				.then(response => {
+				const html = response.data
+				const $ = cheerio.load(html)
+				let spectab =[];
+				let tabledata= [];
 
 
-				}else if(url.includes("reliancedigital")){
-					// Reliance Digital 
-					$('div.pdp__specification-row', html).each(function(){ 
-						spectab.push($(this).find('div.pdp__tab-info__list__name').text()); // .replace(/\  /g,'').split(' ')
-						tabledata.push($(this).find('div.pdp__tab-info__list__value').text()); // .replace(/\  /g,'').split(' ')
-					});
-				}
+			$('table.a-spacing-micro', html).each(function(){ 
+			  tabledata = ($(this).find('td.a-span9').text().replace(/\ /,'').trim().split('       '))
+			  spectab = ($(this).find('span.a-text-bold').text().split(/(?=[A-Z])/).join('\ ').replace(/\  /g,'').split(' '))
+			})
 
 			spectab = spectab.filter(function(e){return e});	
 			tabledata = tabledata.filter(function(e){return e});	
@@ -142,9 +119,64 @@ async function flip_spec(link){
 			console.log(specs)
 			return specs;				
 
+			}).catch(err => console.log(err))
+				return resp;
+		}
+			
+  		const resp = axios(url)
+			  .then(response => {
+				const html = response.data
+				const $ = cheerio.load(html)
+				let spectab =[];
+				let tabledata= [];
+		  
+				if(url.includes("flipkart")){
+				// flipkart--
+				$('td._1hKmbr', html).each(function(){ spectab.push(`${$(this).text().replace(/^Flipkart.*/,'').replace('undefined','')}`);})
+				$('td.URwL2w', html).each(function(){ tabledata.push(`${$(this).text().replace(/^Flipkart.*/,'')} `); })
+				}else if(url.includes("shopclues")){
+				// ShopClues
+				$('tbody', html).each(function(){  
+			  	tabledata.push($(this).find('td[width="70%"]').text().replace(/:/g,'').trim().replace(/\ /g,'')); // .replace(/\  /g,'').split(' ') .replace(/\ .*/g,'') .split(/[\ ..]/)
+			  	spectab.push($(this).find('td[width="30%"]').text().split(/(?=[A-Z])/).join('\ ').replace(/^Maximum.*/,'').replace(/\  /g,'')); //.replace(/₹.*/,'').replace(/\ .*/g,'')
+
+				});
+
+				spectab = spectab.filter(function(e){return e});	
+				tabledata = tabledata.filter(function(e){return e}).slice(0, -1);
+
+				var ts = spectab.toString();
+				console.log(ts)
+				var ts3 = ts.replace(/([A-Z])([\ ])/g, '$1').trim().replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+			  	// 1. var ts4 = ts3.replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+			  	// 2. var ts4 = ts3.replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
+			  	console.log(ts3)
+			  	var ts2 = ts3.split(/\s+/)
+			  	spectab = ts2
+			  	ts = tabledata.toString();
+			  	ts2 = ts.split(/\s+/)
+			  	tabledata = ts2
+
+				}else if(url.includes("reliancedigital")){
+			  	// Reliance Digital 
+			  	$('div.pdp__specification-row', html).each(function(){ 
+				spectab.push($(this).find('div.pdp__tab-info__list__name').text()); // .replace(/\  /g,'').split(' ')
+				tabledata.push($(this).find('div.pdp__tab-info__list__value').text()); // .replace(/\  /g,'').split(' ')
+			  });
+			}
+
+		  	spectab = spectab.filter(function(e){return e});	
+			tabledata = tabledata.filter(function(e){return e});	
+
+			for (var i=0; i<10;i++){
+				specs[spectab[i]] = tabledata[i];
+			}
+			console.log(specs)
+			return specs;				
+
 		}).catch(err => console.log(err))
 					return resp;
-				}
+}
 
 
 
@@ -620,15 +652,15 @@ app.get('/price', async function(req, res){
 });
 
 
-//app.get('/email', async function(req, res){
-async function email(id, p_img, p_price, p_title, p_link, price, mrp)
-	//const id = req.query.id
+app.get('/email', async function(req, res){
+//async function email(id, p_img, p_price, p_title, p_link, price, mrp)
+	const id = req.query.id
   	//const p_img = req.query.img
   	//const p_price = req.query.price
   	//const p_title = req.query.title
   	//const p_link = req.query.link
   	
-//  	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 	//const mailjet = Mailjet.apiConnect(
 	//	process.env.MJ_APIKEY_PUBLIC,
 	//	process.env.MJ_APIKEY_PRIVATE,
@@ -641,33 +673,33 @@ async function email(id, p_img, p_price, p_title, p_link, price, mrp)
 		}
 	  	
 		//var content = util.format(data);
-		var d1 = data.replace("product.title","${p_title}")	
-		var d2 = d1.replace("product.mrp", "${price}")
+	//	var d1 = data.replace("product.title","${p_title}")	
+	//	var d2 = d1.replace("product.mrp", "${price}")
 		console.log(d2);	
 
-//	  const msg = {
-//
-//		    to: id,
-//		    from: 'thrifty.noreply@gmail.com',
-//		    subject: 'Sending with Twilio SendGrid is Fun',
-//		    text: 'and easy to do anywhere, even with Node.js',
-//		    html: data,
-//
-//	  };
-//
-//	const request = sgMail.send(msg);
-//
-//		request
-//			.then((result) => {
-//				console.log(result.body)
-//				res.send("Sent!")
-//			})
-//			.catch((err) => {
-//				console.log(err.statusCode)
-//			})
+	  const msg = {
+
+		    to: id,
+		    from: 'thrifty.noreply@gmail.com',
+		    subject: 'Sending with Twilio SendGrid is Fun',
+		    text: 'and easy to do anywhere, even with Node.js',
+		    html: data,
+
+	  };
+
+	const request = sgMail.send(msg);
+
+		request
+			.then((result) => {
+				console.log(result.body)
+				res.send("Sent!")
+			})
+			.catch((err) => {
+				console.log(err.statusCode)
+			})
 	});
-}
-//})
+//}
+})
 
 
 app.get('/suggestion', async function(req, res){
