@@ -7,6 +7,7 @@ const cheerio = require('cheerio') // we scraper access classes
 const fs = require('fs')
 const express = require('express') // target link, to follow root
 const app = express()
+var async = require("async");
 var util = require("util");
 //const Mailjet = require('node-mailjet');
 var path = require('path');
@@ -99,23 +100,37 @@ async function flip_spec(link){
 	  .then(response => {
 		const html = response.data
 		const $ = cheerio.load(html)
-		let spectab =[];
-		let tabledata= [];
+		let st =[];
+		let tb =[];
+		let arr = []
 
-
-		$('table.a-spacing-micro', html).each(function(){ 
-		  tabledata = ($(this).find('td.a-span9').text().replace(/\ /,'').trim().split('       '))
-		  spectab = ($(this).find('span.a-text-bold').text().split(/(?=[A-Z])/).join('\ ').replace(/\  /g,'').split(' '))
+		
+		$('div#detailBullets_feature_div', html).each(function(){
+		  for(let j=1;j<10;j++){
+			st.push($(this).find(`ul.a-spacing-none:nth-child(1) > li:nth-child(${j}) > span`).text().replace(/\s+/g,' '))
+		  }
+		  let first = st.shift()
+			arr = st
+			arr.push(first);
 		})
-
-		spectab = spectab.filter(function(e){return e});	
-		tabledata = tabledata.filter(function(e){return e});	
-
-		for (var i=0; i<10;i++){
-		  specs[spectab[i]] = tabledata[i];
-		}
-		console.log(specs)
-		return specs;				
+		
+		if(st.length<2){
+			
+			$('table#productDetails_techSpec_section_1', html).each(function(){
+				for(let j=0;j<11;j++){
+				  st.push($(this).find(`tbody:nth-child(1) > tr:nth-child(${j}) > th:nth-child(1)`).text())
+				  tb.push($(this).find(`tbody:nth-child(1) > tr:nth-child(${j}) > td:nth-child(2)`).text().replace(/\s+/g,' '))
+				}
+				st = st.filter(function(e){return e});	
+				tb = tb.filter(function(e){return e});	
+				for(let i=0;i<10;i++){
+					arr.push(`${st[i]} : ${tb[i]}`)
+				}
+		})
+	}
+	
+	console.log(arr)
+		return arr;				
 
 	  }).catch(err => console.log(err))
 	return resp;
@@ -514,24 +529,24 @@ app.get('/wishlist', async function(req, res){
 
 
 function price_check(url, price){
-
-
-  let amz_price;
-  let flp_price;
-  let shp_price;
-  let rlc_price;
+	//return new Promise((resolve) => {
+      //  setTimeout(() => {
+			
+	let amz_price;
+	let flp_price;
+	let shp_price;
+	let rlc_price;
 	let func_resp;
-  let mrp;
-  let title;
-  let href;
-  let link;
+	let mrp;
+	let title;
+	let href;
+	let link;
 
-  fs.readFile(path.join(__dirname, "email-template.html"),'utf8', function (err, data) {
+  fs.readFile(path.join(__dirname, "email-template.html"),'utf8', function (err, datas) {
 	if (err) {
 	  console.log(err);
 	  process.exit(1);
 	}
-
 
 	if (url.includes("amazon")){
 	  // Amazon
@@ -558,8 +573,7 @@ function price_check(url, price){
 			$('img#landingImage', html).each(function () { title=$(this).attr('alt');  })
 			$('img#landingImage', html).each(function () { href=$(this).attr('src'); })
 
-
-			var dt2 = data.replace(/product.title/g, title).replace(/product.price/g, amz_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Amazon');
+			var dt2 = datas.replace(/product.title/g, title).replace(/product.price/g, amz_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Amazon');
 
 			return dt2;	
 		  }else{
@@ -567,16 +581,14 @@ function price_check(url, price){
 			return "unchanged";
 		  }
 		});
-	  func_resp = resp;
-	  return func_resp;
+	
+	  return resp;
 	}
 
-	const resp = axios(url)
+	const resp =  axios(url)
 	  .then(response => {
 		const html = response.data
 		const $ = cheerio.load(html)
-
-		//console.log(dt2)
 
 		if(url.includes("flipkart")){
 		  // flipkart--
@@ -590,18 +602,9 @@ function price_check(url, price){
 			$('div._27UcVY', html).each(function () { mrp=$(this).text().replace('₹','').replace(/\..*/,'');  })
 			$('img._396cs4', html).each(function () { title=$(this).attr('alt');  })
 			$('img._396cs4', html).each(function () { href=$(this).attr('src').replace(/(.*.svg)$/,''); })
-			//if(!mrp.length){
-			//	$('div._3I9_wc', html).each(function () { mrp=$(this).text().replace('₹','').replace(/\..*/,''); })
-			//}
-			//if(!title.length){
-			//	$('a.IRpwTa', html).each(function () { title=$(this).attr('title');  })
-			//}
-			//if(!href.length){
-			//	$('img._2r_T1I', html).each(function () { href=$(this).attr('src').replace(/(.*.svg)$/,''); })
-			//}
 
 			console.log("flip : was3")
-			var dt2 = data.replace(/product.title/g, title).replace(/product.price/g, flp_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Flipkart');
+			var dt2 = datas.replace(/product.title/g, title).replace(/product.price/g, flp_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Flipkart');
 
 			return dt2;	
 		  }else{
@@ -610,7 +613,6 @@ function price_check(url, price){
 			return "unchanged";
 		  }
 
-		  console.log("flip : was, value: ", flp_price)
 		}else if(url.includes("shopclues")){
 		  // ShopClues
 		  console.log("Shop: was here") 
@@ -621,7 +623,7 @@ function price_check(url, price){
 			$('a.active', html).each(function () { title=$(this).find('img').attr('alt');  })
 			$('a.active', html).each(function () { href=$(this).find('img').attr('data-img'); })
 
-			var dt2 = data.replace(/product.title/g, title).replace(/product.price/g, shp_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Shopclues');
+			var dt2 = datas.replace(/product.title/g, title).replace(/product.price/g, shp_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Shopclues');
 			return dt2;	
 		  }else{
 			console.log("Shop: unchanged!!")
@@ -637,7 +639,7 @@ function price_check(url, price){
 			$('img#myimage', html).each(function () { title=$(this).attr('title');  })
 			$('img#myimage', html).each(function () { href=$(this).attr('src').replace(/^(\/)/,'https://www.reliancedigital.in/'); })
 
-			var dt2 = data.replace(/product.title/g, title).replace(/product.price/g, rlc_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Reliance Digital');
+			var dt2 = datas.replace(/product.title/g, title).replace(/product.price/g, rlc_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/,'Reliance Digital');
 			return dt2;	
 		  }else{
 			console.log("Reliance: unchanged!!")
@@ -649,30 +651,30 @@ function price_check(url, price){
 
 	return resp;
   });
+			
+//}, 2000);
+//});
 }
 
 
 app.get('/price', function(req, res){
+
 
   var p_stat = "";
   const uri ="mongodb://127.0.0.1:27017/";
   MongoClient.connect(uri, function(err, db){
 	if (err) throw err;
 	var dbo = db.db("test");
-console.log('fff1->', dbo);
-	dbo.collection("customers").find({}).toArray( async function(err, doc) {
+//console.log('fff1->', dbo);
+	dbo.collection("customers").find({}).toArray( function(err, doc) {
 //	var cursor = dbo.collection("customers").find({})
 //	cursor.forEach( async function(doc, err){
-//	if (err) throw err;
-	  //docs = result;
-	  console.log('fff ->',doc);
+	if (err) throw err;
 	  var docs = doc
-	  
 	  for(let j=0;j<docs.length;j++){
 		for(let k=0;k<docs[j].link.length;k++){
-		// console.log(docs[j].link);
-		 p_stat = await price_check(docs[j].link[k], docs[j].price[k]);
-		  console.log("P_stat : ",p_stat)
+		 p_stat = price_check(docs[j].link[k], docs[j].price[k]);
+		 console.log("P_stat : ",p_stat)
 		}
 	  }
 	 // }
