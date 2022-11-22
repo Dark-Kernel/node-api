@@ -713,61 +713,173 @@ app.get('/email', async function (req, res) {
 });
 
 
+async function sug_spec(link){
+
+	var specs = {};
+	let url = `${link}`
+
+	// Amazon	
+	let headers = {
+			"Host": "www.amazon.in",
+			"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
+			"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+			"Accept-Language": "en-US,en;q=0.5",
+			"Accept-Encoding": "gzip, deflate, br",
+			"Connection": "keep-alive",
+		}
+
+		const resp2 = await axios.get(url, { headers })
+			.then(response => {
+				const html = response.data
+				const $ = cheerio.load(html)
+				let st = [];
+				let tb = [];
+				let arr = []
+
+
+				$('div#detailBullets_feature_div', html).each(function () {
+					for (let j = 1; j < 10; j++) {
+						st.push($(this).find(`ul.a-spacing-none:nth-child(1) > li:nth-child(${j}) > span`).text().replace(/\s+/g, ' '))
+					}
+					let first = st.shift()
+					arr = st
+					arr.push(first);
+				})
+
+				if (st.length < 2) {
+
+					$('table#productDetails_techSpec_section_1', html).each(function () {
+						for (let j = 0; j < 11; j++) {
+							st.push($(this).find(`tbody:nth-child(1) > tr:nth-child(${j}) > th:nth-child(1)`).text())
+							tb.push($(this).find(`tbody:nth-child(1) > tr:nth-child(${j}) > td:nth-child(2)`).text().replace(/\s+/g, ' '))
+						}
+						st = st.filter(function (e) { return e });
+						tb = tb.filter(function (e) { return e });
+						for (let i = 0; i < 10; i++) {
+							arr.push(`${st[i]} : ${tb[i]}`)
+						}
+					})
+				}
+
+				console.log(arr)
+				return arr;
+
+			}).catch(err => console.log(err))
+	
+	return resp2
+}
 
 
 app.get('/suggestion', async function (req, res) {
 
-	var sug = {};
-	const product = req.query.product.replace('_', '+');
 
-	let headers = { 
-		"Host": "www.amazon.in",
+
+  var sug = {};
+  const product = req.query.product.replace('_', '+');
+	var art1 = [];
+	let headers = {
+
+		"Host": "www.flipkart.com",
 		"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
 		"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 		"Accept-Language": "en-US,en;q=0.5",
 		"Accept-Encoding": "gzip, deflate, br",
 		"Connection": "keep-alive",
 	}
-
-	let site = "Amazon"
+	let url;
+	let site = "Flipkart"
 	let titles = []
 	let prices = []
 	let hrefs = []
 	let links = []
 	let mrps = []
-	let link0 = `https://www.amazon.in/s?k=${product}&ref=nb_sb_noss_1`
-	const resp = await axios.get(link0, { headers })
+		//	let link = `https://www.flipkart.com/search?q=${product}` // scraping link
+		let link = `https://www.flipkart.com/search?q=${product}` // scraping link
+		//let link = `https://www.flipkart.com/search?q=${product}&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off`
+		let resp1 = await axios(link, { headers })
+			.then(response => {
+				const html = response.data
+				const $ = cheerio.load(html)
+
+
+				// debugged- fixed url and title not found error.
+				/* fs.writeFile("flipkart.html", html, (err) => {
+		
+					  if (err)
+						console.log(err);
+					  else { console.log("done" )} 
+				}); */
+
+				$('div._27UcVY', html).each(function () { mrps.push($(this).text().replace('₹', '').replace(/\..*/, '')); })
+				$('img._396cs4', html).each(function () { titles.push($(this).attr('alt')); })
+				// $('ul._1xgFaf', html).each(function () { specs.push($(this).text());  })
+				$('div._30jeq3', html).each(function () { prices.push($(this).text().replace('₹', '').replace(/\..*/, '')); })
+				$('img._396cs4', html).each(function () { hrefs.push($(this).attr('src').replace(/(.*.svg)$/, '')); })
+				$('a._1fQZEK', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/, 'https://www.flipkart.com/').replace(/\?.*/, '')); })
+				if (!links.length) {
+					$('a._2rpwqI', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/, 'https://www.flipkart.com/').replace(/\?.*/, '')); })
+				}
+				if (!links.length) {
+					$('a.IRpwTa', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/, 'https://www.flipkart.com/').replace(/\?.*/, '')); })
+				}
+				if (!mrps.length) {
+					$('div._3I9_wc', html).each(function () { mrps.push($(this).text().replace('₹', '').replace(/\..*/, '')); })
+				}
+				if (!titles.length) {
+					$('a.IRpwTa', html).each(function () { titles.push($(this).attr('title')); })
+				}
+
+				if (!hrefs.length) {
+					$('img._2r_T1I', html).each(function () { hrefs.push($(this).attr('src').replace(/(.*.svg)$/, '')); })
+				}
+				//_2r_T1I
+
+				for (let i = 0; i < 1; i++) {
+
+					let title = titles[i]
+					let link = links[i]
+					let href = hrefs[i]
+					let price = prices[i]
+					let mrp = mrps[i]
+					url = link;
+					sug = {
+						site,
+						price,
+						title,
+						mrp,
+						link,
+						href,
+
+					}
+				}
+				return sug;
+			}).catch(err => console.log(err))
+	
+console.log(url);
+const resp2 = await axios(url)
 		.then(response => {
 			const html = response.data
 			const $ = cheerio.load(html)
-			$('span.a-offscreen', html).each(function () { mrps.push($(this).text().replace('₹', '').replace(/\..*/, '')); })
-			$('span.a-text-normal', html).each(function () { titles.push($(this).text().replace(/^(MORE\ RESULTS)/g, '').replace(/^(RESULTS)/g, '')); })
-			$('span.a-price-whole', html).each(function () { prices.push($(this).text().replace('₹', '').replace(/\..*/, '')); })
-			$('img.s-image', html).each(function () { hrefs.push($(this).attr('src')); })
-			$('a.s-no-outline', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/, 'https://www.amazon.in/').replace(/sspa\/click\?ie\=UTF8\&spc\=(.*)\&url\=/,'').replace(/\%2F/g,'/').replace(/\%3D/g,'=')) })
-			titles = titles.filter(function (e) { return e });
-			prices.slice(5); titles.slice(5); hrefs.slice(5); links.slice(5); mrps.slice(5)
-			for (var i = 0; i < 1; i++) {
-				hrefs.filter(item => !"https://m.media-amazon.com/images/I/11hfR5Cq9GL._SS200_.png".includes(item))
-				let title = titles[i]
-				let link = links[i]
-				let href = hrefs[i]
-				let price = prices[i]
-				let mrp = mrps[i]
-				sug = {
-					site,
-					price,
-					title,
-					mrp,
-					link,
-					href,
-				}
-			}
-			return sug;
-		}).catch(err => console.log(err))
+			let spectab = [];
+		  	let specs ={};
+			let tabledata = [];
 
-	res.json(resp);
-	console.log(resp);
+				$('td._1hKmbr', html).each(function () { spectab.push(`${$(this).text().replace(/^Flipkart.*/, '').replace('undefined', '')}`); })
+				$('td.URwL2w', html).each(function () { tabledata.push(`${$(this).text().replace(/^Flipkart.*/, '')} `); })
+				spectab = spectab.filter(function (e) { return e });
+				tabledata = tabledata.filter(function (e) { return e }).slice(0, -1);
+				for (var i = 0; i < 10; i++) {
+					specs[spectab[i]] = tabledata[i];
+				}
+				return specs;
+			}); 
+	
+  let flp_spec={ specs: resp2 }
+  console.log(flp_spec)
+  	Object.assign(resp1, flp_spec)
+	//const resp = [resp1, resp2];
+  	res.json(resp1);
+	console.log(resp1);
 
 })
 
