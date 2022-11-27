@@ -3,8 +3,11 @@
 #### * You can visit [Thrifty](https://thrifty-shopping-assistant.web.app) to take a look of frontend. server might be down while you search, you can run this node app on localhost.
 
 
-
 # Node Webscraper-API
+
+### Used:
+	- nodejs
+	- mongodb
 
 ### Simple script to get data from E-Commerce site:
     1. Amazon
