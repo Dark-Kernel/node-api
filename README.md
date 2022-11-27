@@ -1,3 +1,10 @@
+
+### This node application is backend part of Thrifty project. For frontend code you can visit 
+	https://github.com/NaufilAsar/gpm-major-project.git 
+### you can visit [Thrifty](https://thrifty-shopping-assistant.web.app) to take a look of frontend. server might be down while you search, you can run this node app on localhost.
+
+
+
 # Node Webscraper-API
 
 ### Simple script to get data from E-Commerce site:
