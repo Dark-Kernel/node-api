@@ -678,7 +678,8 @@ app.get('/price', function (req, res) {
 				}
 			}
 			// }
-			res.send(p_stat)
+		  console.log("Pstat => ", p_stat)
+//			res.send(p_stat)
 			db.close();
 		})
 	})
