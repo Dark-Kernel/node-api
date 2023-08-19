@@ -1,5 +1,5 @@
 services:
-  web:
+  website:
     image: "darkkernel/node-api"
     ports:
       - "8000:8080"
