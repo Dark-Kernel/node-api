@@ -433,7 +433,7 @@ async function shopclues(product) {
 
 
 app.get('/', function (req, res) {
-	res.json('This is my node web scraper 😅 ')
+	res.json('This is my node web ecom scraper 😅 ')
 })
 
 app.get('/specs', async function (req, res) {
