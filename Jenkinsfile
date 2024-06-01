@@ -24,8 +24,10 @@ pipeline {
         }
         stage("Deploy"){
             steps{
-                sh "docker-compose down && docker-compose up -d"
-                echo "Deployed to ec2"
+                sh "kubectl apply -f Kubernetes/deployment.yaml"
+                sh "kubectl apply -f Kubernetes/service.yaml"
+                // sh "docker-compose down && docker-compose up -d"
+                echo "Deployed via kubernetes"
             }
         }
     }
