@@ -5,8 +5,9 @@
 # Node Webscraper-API
 
 ### Used:
-	- nodejs
-	- mongodb
+	- NodeJS
+    - ExpressJs
+	- MongoDB
 
 ### Simple script to get data from E-Commerce site:
     1. Amazon
