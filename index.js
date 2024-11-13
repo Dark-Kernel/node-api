@@ -1,31 +1,26 @@
 const PORT = process.env.PORT || 8080
+SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
 const sgMail = require('@sendgrid/mail');
-var MongoClient = require('mongodb').MongoClient;
-process.env.SENDGRID_API_KEY = 'SG.yAmfaKEqQXKaKaQERDtsgA.pPIdOURwedB5QkghH30OVK_p9mPvRsrknXCZd_iPmUQ'
-const axios = require('axios') // https link access (like clink)
-const cheerio = require('cheerio') // we scraper access classes
+const MongoClient = require('mongodb').MongoClient;
 const fs = require('fs')
-const express = require('express') // target link, to follow root
-const app = express()
-var async = require("async");
-var util = require("util");
-//const Mailjet = require('node-mailjet');
+const cors = require('cors')
+const express = require('express')
+const axios = require('axios')
+const cheerio = require('cheerio')
 var path = require('path');
-const cors = require('cors') // headers
-app.use(cors())
-var cache;
-var len = 20;
+const wishlistRoutes = require('./wishlist_handler');
 
+app.use(cors())
+const app = express()
+app.use(wishlistRoutes);
 
 function SortByName(x, y) {
 	return ((x.titles == y.titles) ? 0 : ((x.titles > y.titles) ? 1 : -1));
 }
 
-
 async function amazon(product) {
 	var art0 = [];
 	let headers = {
-
 		"Host": "www.amazon.in",
 		"User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0",
 		"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -67,7 +62,6 @@ async function amazon(product) {
 						mrp,
 						link,
 						href,
-
 					})
 				}
 				return art0;
@@ -82,7 +76,6 @@ async function flip_spec(link) {
 
 	var specs = {};
 	let url = `${link}`
-
 
 	if (url.includes("amazon")) {
 		// Amazon	
@@ -104,7 +97,6 @@ async function flip_spec(link) {
 				let tb = [];
 				let arr = []
 
-
 				$('div#detailBullets_feature_div', html).each(function () {
 					for (let j = 1; j < 10; j++) {
 						st.push($(this).find(`ul.a-spacing-none:nth-child(1) > li:nth-child(${j}) > span`).text().replace(/\s+/g, ' '))
@@ -115,7 +107,6 @@ async function flip_spec(link) {
 				})
 
 				if (st.length < 2) {
-
 					$('table#productDetails_techSpec_section_1', html).each(function () {
 						for (let j = 0; j < 11; j++) {
 							st.push($(this).find(`tbody:nth-child(1) > tr:nth-child(${j}) > th:nth-child(1)`).text())
@@ -128,10 +119,7 @@ async function flip_spec(link) {
 						}
 					})
 				}
-
-				console.log(arr)
 				return arr;
-
 			}).catch(err => console.log(err))
 		return resp;
 	}
@@ -159,11 +147,7 @@ async function flip_spec(link) {
 				tabledata = tabledata.filter(function (e) { return e }).slice(0, -1);
 
 				var ts = spectab.toString();
-				console.log(ts)
 				var ts3 = ts.replace(/([A-Z])([\ ])/g, '$1').trim().replace(/([\ ])([\(])([a-z])([\ ])/g, '$2$3').trim().replace(/([\ ])([\(])([\ ])/g, '$2').trim()
-				// 1. var ts4 = ts3.replace(/([\ ])([\(])([\ ])/g,'$2').trim()
-				// 2. var ts4 = ts3.replace(/([\ ])([\(])([a-z])([\ ])/g,'$2$3').trim().replace(/([\ ])([\(])([\ ])/g,'$2').trim()
-				console.log(ts3)
 				var ts2 = ts3.split(/\s+/)
 				spectab = ts2
 				ts = tabledata.toString();
@@ -184,7 +168,6 @@ async function flip_spec(link) {
 			for (var i = 0; i < 10; i++) {
 				specs[spectab[i]] = tabledata[i];
 			}
-			console.log(specs)
 			return specs;
 
 		}).catch(err => console.log(err))
@@ -213,14 +196,11 @@ async function flipkart(product) {
 	let links = []
 	let mrps = []
 	for (let j = 1; j <= 2; j++) {
-		//	let link = `https://www.flipkart.com/search?q=${product}` // scraping link
 		let link = `https://www.flipkart.com/search?q=${product}&page=${j}` // scraping link
-		//let link = `https://www.flipkart.com/search?q=${product}&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off`
 		let resp = axios(link, { headers })
 			.then(response => {
 				const html = response.data
 				const $ = cheerio.load(html)
-
 
 				// debugged- fixed url and title not found error.
 				/* fs.writeFile("flipkart.html", html, (err) => {
@@ -232,7 +212,6 @@ async function flipkart(product) {
 
 				$('div._27UcVY', html).each(function () { mrps.push($(this).text().replace('₹', '').replace(/\..*/, '')); })
 				$('img._396cs4', html).each(function () { titles.push($(this).attr('alt')); })
-				// $('ul._1xgFaf', html).each(function () { specs.push($(this).text());  })
 				$('div._30jeq3', html).each(function () { prices.push($(this).text().replace('₹', '').replace(/\..*/, '')); })
 				$('img._396cs4', html).each(function () { hrefs.push($(this).attr('src').replace(/(.*.svg)$/, '')); })
 				$('a._1fQZEK', html).each(function () { links.push($(this).attr('href').replace(/^(\/)/, 'https://www.flipkart.com/').replace(/\?.*/, '')); })
@@ -252,7 +231,6 @@ async function flipkart(product) {
 				if (!hrefs.length) {
 					$('img._2r_T1I', html).each(function () { hrefs.push($(this).attr('src').replace(/(.*.svg)$/, '')); })
 				}
-				//_2r_T1I
 
 				for (let i = 1; i < 24; i++) {
 
@@ -269,7 +247,6 @@ async function flipkart(product) {
 						mrp,
 						link,
 						href,
-
 					})
 				}
 				return art1;
@@ -284,9 +261,7 @@ async function flipkart(product) {
 
 async function reliance(product) {
 
-
 	var art2 = []
-
 	let site = "Reliance"
 	let titles = []
 	let prices = []
@@ -299,7 +274,6 @@ async function reliance(product) {
 			.then(response => {
 				const html = response.data
 				const $ = cheerio.load(html)
-
 
 				// debugged: fixed the price not found && Product not found.
 				/* fs.writeFile("reliance.html", html, (err) => {
@@ -347,7 +321,6 @@ async function reliance(product) {
 							})
 						}
 					}
-
 				}
 				return art2;
 			}).catch(err => console.log(err))
@@ -358,8 +331,6 @@ async function reliance(product) {
 
 
 async function shopclues(product) {
-
-
 	var art3 = []
 	let link3 = `https://bazaar.shopclues.com/search?q=${product}&sc_z=&z=0&count=15&user_id=&user_segment=default` // scraping link
 	const resp = axios(link3)
@@ -386,7 +357,6 @@ async function shopclues(product) {
 
 			$('span.no_fnd', html).each(function () { chk = $(this).text(); })
 			if (chk == "NO RESULT FOUND !") {
-				//res.json(result.sort(SortByName))
 				return art3;
 				//console.log("\n\n-----------NOT FOUND IN SHOPCLUES---------\n\n")
 			} else {
@@ -407,7 +377,6 @@ async function shopclues(product) {
 					let href = hrefs[i]
 					let price = prices[i]
 					let mrp = mrps[i]
-					//console.log("\n\n",title," \n\n")
 					if (!title == "") {
 						art3.push({
 							site,
@@ -416,17 +385,11 @@ async function shopclues(product) {
 							mrp,
 							link,
 							href,
-
 						})
 					}
-
 				}
-
 			}
-			//	res.json(result.sort(SortByName))
-
 			return art3;
-
 		}).catch(err => console.log(err))
 	return resp;
 }
@@ -440,11 +403,9 @@ app.get('/specs', async function (req, res) {
 	const _link = req.query.link
 	const spec = await flip_spec(_link)
 	res.json(spec);
-
 })
 
-app.get('/cache', async function (req, res) {
-
+app.get('/previous_response', async function (req, res) {
 	var options = {
 		root: path.join(__dirname)
 	};
@@ -452,95 +413,21 @@ app.get('/cache', async function (req, res) {
 		if (err) {
 			next(err);
 		} else {
-			console.log('Sent');
+			res.send('Sent');
 		}
 	});
-})
-
-
-
-app.get('/wishlist', async function (req, res) {
-
-	const track_link = req.query.link
-	const mail_id = req.query.id
-	const title = req.query.title
-	const price = req.query.price
-
-	const act = req.query.act
-	const uri = "mongodb://127.0.0.1:27017/";
-
-	MongoClient.connect(uri, function (err, db) {
-		var dbo = db.db("test");
-
-		if (err) throw err;
-		console.log("Connected successfully to server");
-		if (act == "i") {
-			var cquery = { email: mail_id };
-			dbo.collection("customers").find(cquery).toArray(function (err, result1) {
-				if (err) throw err;
-				console.log(result1.length)
-				if (result1.length !== 0) {
-					console.log("exist")
-					var query = { email: mail_id }
-					var push = { $push: { link: track_link, title: title, price: price } }
-					dbo.collection("customers").updateMany(query, push, function (err, result) {
-						if (err) throw err;
-						console.log("Inserted")
-						res.json("Done");
-						db.close();
-					});
-				} else {
-					var query = { email: mail_id, link: [track_link], title: [title], price: [price] };
-					dbo.collection("customers").insertOne(query, function (err, result) {
-						if (err) throw err;
-						console.log("Inserted")
-						res.json("Done");
-						db.close();
-					});
-				}
-
-			});
-		}
-		else if (act == "r") {
-
-			var query = { email: mail_id };
-			dbo.collection("customers").find(query).toArray(function (err, result) {
-				if (err) throw err;
-				console.log("Readed: ", result)
-				res.json(result);
-				db.close();
-			});
-		}
-		else if (act == "d") {
-
-			var query = { email: mail_id };
-			var unset = { $pull: { link: track_link, title: title, price: price } }
-			dbo.collection("customers").updateMany(query, unset, function (err, result) {
-				if (err) throw err;
-				console.log("Deleted: ", result)
-				res.json("Deleted");
-				db.close();
-			});
-
-		}
-	});
-
 })
 
 
 function price_check(url, price) {
-	//return new Promise((resolve) => {
-	//  setTimeout(() => {
 
 	let amz_price;
 	let flp_price;
 	let shp_price;
 	let rlc_price;
-	
 	let mrp;
 	let title;
 	let href;
-	let link;
 
 	 fs.readFile(path.join(__dirname, "email-template.html"), 'utf8', async function (err, datas) {
 		if (err) {
@@ -568,7 +455,6 @@ function price_check(url, price) {
 
 					$('span.a-price-whole', html).each(function () { amz_price = $(this).text().replace('₹', '').replace(/\..*/, ''); })
 					if (amz_price < price) {
-
 						$('span.a-offscreen', html).each(function () { mrp = $(this).text().replace('₹', '').replace(/\..*/, ''); })
 						$('img#landingImage', html).each(function () { title = $(this).attr('alt'); })
 						$('img#landingImage', html).each(function () { href = $(this).attr('src'); })
@@ -577,11 +463,9 @@ function price_check(url, price) {
 
 						return dt2;
 					} else {
-						console.log("amz : unchanged !!")
 						return "unchanged";
 					}
 				});
-				console.log("resp ", resp)
 			return resp;
 		}
 
@@ -592,27 +476,18 @@ function price_check(url, price) {
 
 				if (url.includes("flipkart")) {
 					// flipkart--
-					console.log("flip : was")
 					$('div._16Jk6d', html).each(function () { flp_price = $(this).text().replace('₹', '').replace(/\..*/, ''); })
 
 					console.log("flip : was, value: ", flp_price)
 					if (flp_price < price) {
-
-						console.log("flip : was2 ")
 						$('div._27UcVY', html).each(function () { mrp = $(this).text().replace('₹', '').replace(/\..*/, ''); })
 						$('img._396cs4', html).each(function () { title = $(this).attr('alt'); })
 						$('img._396cs4', html).each(function () { href = $(this).attr('src').replace(/(.*.svg)$/, ''); })
-
-						console.log("flip : was3")
 						var dt2 = datas.replace(/product.title/g, title).replace(/product.price/g, flp_price).replace(/product.href/g, href).replace(/product.mrp/, mrp).replace(/product.site/, 'Flipkart');
-
 						return dt2;
 					} else {
-
-						console.log("flip: unchanged!!")
 						return "unchanged";
 					}
-
 				} else if (url.includes("shopclues")) {
 					// ShopClues
 					console.log("Shop: was here")
@@ -646,51 +521,37 @@ function price_check(url, price) {
 						return "unchanged";
 					}
 				}
-
 			}).catch(err => console.log(err))
-		 
 		return resp;
 	});
-
-	//}, 2000);
-	//});
 }
 
 
 app.get('/price', function (req, res) {
-
-
 	var p_stat = "";
 	const uri = "mongodb://127.0.0.1:27017/";
 	MongoClient.connect(uri, function (err, db) {
 		if (err) throw err;
 		var dbo = db.db("test");
-		//console.log('fff1->', dbo);
 		dbo.collection("customers").find({}).toArray( function (err, doc) {
-			//	var cursor = dbo.collection("customers").find({})
-			//	cursor.forEach( async function(doc, err){
 			if (err) throw err;
 			var docs = doc
 			for (let j = 0; j < docs.length; j++) {
 				for (let k = 0; k < docs[j].link.length; k++) {
 					p_stat = price_check(docs[j].link[k], docs[j].price[k]);
-					console.log("P_stat : ", p_stat)
 				}
 			}
-			// }
-		  console.log("Pstat => ", p_stat)
-//			res.send(p_stat)
 			db.close();
 		})
 	})
-
+    res.send(p_stat);
 });
 
 app.get('/email', async function (req, res) {
 	const id = req.query.id
 	const data = req.query.data
 
-	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+	sgMail.setApiKey(SENDGRID_API_KEY);
 
 	const msg = {
 
@@ -705,7 +566,6 @@ app.get('/email', async function (req, res) {
 	const request = sgMail.send(msg);
 	request
 		.then((result) => {
-			console.log(result.body)
 			res.send("Sent!")
 		})
 		.catch((err) => {
@@ -716,9 +576,7 @@ app.get('/email', async function (req, res) {
 
 async function sug_spec(link){
 
-	var specs = {};
 	let url = `${link}`
-
 	// Amazon	
 	let headers = {
 			"Host": "www.amazon.in",
@@ -737,7 +595,6 @@ async function sug_spec(link){
 				let tb = [];
 				let arr = []
 
-
 				$('div#detailBullets_feature_div', html).each(function () {
 					for (let j = 1; j < 10; j++) {
 						st.push($(this).find(`ul.a-spacing-none:nth-child(1) > li:nth-child(${j}) > span`).text().replace(/\s+/g, ' '))
@@ -748,7 +605,6 @@ async function sug_spec(link){
 				})
 
 				if (st.length < 2) {
-
 					$('table#productDetails_techSpec_section_1', html).each(function () {
 						for (let j = 0; j < 11; j++) {
 							st.push($(this).find(`tbody:nth-child(1) > tr:nth-child(${j}) > th:nth-child(1)`).text())
@@ -761,12 +617,8 @@ async function sug_spec(link){
 						}
 					})
 				}
-
-				console.log(arr)
 				return arr;
-
 			}).catch(err => console.log(err))
-	
 	return resp2
 }
 
@@ -777,7 +629,6 @@ app.get('/suggestion', async function (req, res) {
 
   var sug = {};
   const product = req.query.product.replace('_', '+');
-	var art1 = [];
 	let headers = {
 
 		"Host": "www.flipkart.com",
@@ -794,14 +645,11 @@ app.get('/suggestion', async function (req, res) {
 	let hrefs = []
 	let links = []
 	let mrps = []
-		//	let link = `https://www.flipkart.com/search?q=${product}` // scraping link
 		let link = `https://www.flipkart.com/search?q=${product}` // scraping link
-		//let link = `https://www.flipkart.com/search?q=${product}&otracker=search&otracker1=search&marketplace=FLIPKART&as-show=on&as=off`
 		let resp1 = await axios(link, { headers })
 			.then(response => {
 				const html = response.data
 				const $ = cheerio.load(html)
-
 
 				// debugged- fixed url and title not found error.
 				/* fs.writeFile("flipkart.html", html, (err) => {
@@ -856,7 +704,6 @@ app.get('/suggestion', async function (req, res) {
 				return sug;
 			}).catch(err => console.log(err))
 	
-console.log(url);
 const resp2 = await axios(url)
 		.then(response => {
 			const html = response.data
@@ -876,7 +723,6 @@ const resp2 = await axios(url)
 			}); 
 	
   let flp_spec={ specs: resp2 }
-  console.log(flp_spec)
   	Object.assign(resp1, flp_spec)
 	//const resp = [resp1, resp2];
   	res.json(resp1);
@@ -903,17 +749,13 @@ app.get('/results', async function (req, res) {
 	const r4 = await shopclues(product);
 
 	result = [r1, r2, r3, r4];
-	cache = JSON.stringify(result.sort(SortByName));
+	previous_repnsonse = JSON.stringify(result.sort(SortByName));
 
 	res.json(result.sort(SortByName));
 
-	fs.writeFile('data.json', cache, function (err) {
+	fs.writeFile('data.json', previous_repnsonse, function (err) {
 		if (err) throw err;
-		console.log('saved!');
 	})
-
-	console.log(result);
-
 })
 
 
